@@ -1,0 +1,44 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: ENG_FinOpsETL
+prefect-version: 3.6.13
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.git_clone:
+    repository: https://github.com/Prog-LucasAlves/ENG_FinOpsETL.git
+    branch: FinOpsETL
+    access_token: '{{ prefect.blocks.secret.deployment-crypto-fluxo-etl-de-criptomoedas-repo-token
+      }}'
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: Crypto
+  version: null
+  tags: []
+  concurrency_limit: null
+  description: Orquestrador principal do ETL
+  entrypoint: flow_etl.py:crypto_etl
+  parameters: {}
+  work_pool:
+    name: Data
+    work_queue_name: null
+    job_variables: {}
+  schedules:
+  - cron: '*/30 * * * *'
+    timezone: UTC
+    day_or: true
+    active: true
+  - cron: '*/30 * * * *'
+    timezone: UTC
+    day_or: true
+    active: true
