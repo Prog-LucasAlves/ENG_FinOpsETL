@@ -1,0 +1,12 @@
+services:
+  - type: cron
+    name: crypto-etl-job
+    env: python
+    region: oregon  # ou São Paulo se disponível
+    plan: free
+    schedule: "0 */2 * * *"  # A cada 2 horas
+    buildCommand: pip install -r requirements.txt
+    startCommand: python crypto_etl_render.py
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Você configurará manualmente no dashboard
