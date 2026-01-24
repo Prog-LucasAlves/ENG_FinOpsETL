@@ -15,13 +15,15 @@ push: null
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
 - prefect.deployments.steps.git_clone:
+    id: clone-step
     repository: https://github.com/Prog-LucasAlves/ENG_FinOpsETL.git
     branch: FinOpsETL
     access_token: '{{ prefect.blocks.secret.deployment-crypto-fluxo-etl-de-criptomoedas-repo-token
       }}'
 
 - prefect.deployments.steps.pip_install_requirements:
-    requirements_file: ./requirements.txt
+    directory: '{{ clone-step.directory }}'
+    requirements_file: requirements.txt
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
