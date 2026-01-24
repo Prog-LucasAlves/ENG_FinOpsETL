@@ -102,11 +102,11 @@ def load(df):
             print(f"🔗 Conexão com banco estabelecida: {DB_URL.split('@')[-1]}")
 
         # Salvar os dados no banco de dados
-        df.to_sql("crypto_qswl", engine, if_exists="append", index=False)
+        df.to_sql("crypto", engine, if_exists="append", index=False)
         print(f"💾 Dados salvos no banco. {len(df)} registros inseridos.")
 
         # Verificar a inserção dos dados
-        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto_quotes", engine)
+        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto", engine)
         print(f"📈 Total de registros na tabela: {result['total'].iloc[0]}")
 
     except Exception as e:
