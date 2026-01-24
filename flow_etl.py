@@ -79,10 +79,9 @@ def transform(raw_data):
     df = df.rename(columns=existing_mapping)
 
     print(f"📊 DataFrame transformado. Shape: {df.shape}")
-    print("💰 Exemplo de preços:")
+    print("💰 Banco de Dados:")
     for _, row in df.head(3).iterrows():
-        print(f"  {row.get('nome', 'N/A')}: R$ {row.get('preco_atual', 0):,.2f}")
-
+        print(f"  {row.get('id_moeda', 'N/A')} - {row.get('simbolo', 'N/A')}")
     return df
 
 
@@ -97,7 +96,7 @@ def load(df):
             print(f"🔗 Conexão com banco estabelecida: {DB_URL.split('@')[-1]}")
 
         # Salvar os dados no banco de dados
-        df.to_sql("crypto_quotes", engine, if_exists="append", index=False)
+        df.to_sql("crypto_qswl", engine, if_exists="append", index=False)
         print(f"💾 Dados salvos no banco. {len(df)} registros inseridos.")
 
         # Verificar a inserção dos dados
