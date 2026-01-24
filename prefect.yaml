@@ -20,8 +20,8 @@ pull:
     access_token: '{{ prefect.blocks.secret.deployment-crypto-fluxo-etl-de-criptomoedas-repo-token
       }}'
 
-- prefect.deployments.steps.pip_install:
-    requirements_file: pyproject.toml
+- prefect.deployments.steps.pip_install_requirements:
+    requirements_file: ./requirements.txt
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
