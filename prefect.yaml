@@ -43,7 +43,3 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
-  - cron: '*/30 * * * *'
-    timezone: UTC
-    day_or: true
-    active: true
