@@ -137,7 +137,8 @@ def display_crypto_card(crypto: pd.Series, col):
         col: Coluna do Streamlit para exibição
     """
     with col:
-        st.markdown(f"""
+        st.markdown(
+            f"""
                     <div class="crypto-card">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
                             {f'<img src="{crypto["image"]}" width="40" height="40" style="border-radius: 50%; margin-right: 10px;">' if crypto.get("image") else ""}
@@ -146,7 +147,18 @@ def display_crypto_card(crypto: pd.Series, col):
                                 <p style="margin: 0; color: #64748B; font-size: 0.9rem;">{crypto["symbol"].upper()}</p>
                             </div>
                         </div>
-                        """)
+                        {f'<p style="margin: 5px 0; color: #475569;"><strong>Rank:</strong> #{crypto["market_cap_rank"]}</p>' if pd.notna(crypto.get("market_cap_rank")) else ""}
+                            <p style="margin: 5px 0; color: #475569; font-size: 0.8rem;">
+                                <strong>ID:</strong> {crypto["id"]}
+                            </p>
+                            <p style="margin: 5px 0; color: #64748B; font-size: 0.8rem;">
+                                 Última atualização:<br>
+                                {crypto["collected_at"].strftime("%d/%m/%Y %H:%M")}
+                            </p>
+                    </div>
+                        """,
+            unsafe_allow_html=True,
+        )
 
 
 def main():
@@ -312,7 +324,7 @@ def display_overview(crypto_data):
 
     # Selecionar e ordenar colunas
     display_df = display_df[
-        ["imagem", "name", "symbol", "market_cap_rank", "collected_at", "id"]
+        ["image", "name", "symbol", "market_cap_rank", "collected_at", "id"]
     ]
 
     # Exibir tabela
@@ -321,7 +333,7 @@ def display_overview(crypto_data):
         width="content",
         hide_index=True,
         height=800,
-        column_config={"imagem": st.column_config.ImageColumn("Logo", width="small")},
+        column_config={"image": st.column_config.ImageColumn("Logo", width="small")},
     )
 
     # Gráfico de distribuição de ranks
