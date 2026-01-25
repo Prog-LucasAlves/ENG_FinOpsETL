@@ -140,7 +140,7 @@ def display_crypto_card(crypto: pd.Series, col):
         st.markdown(f"""
                     <div class="crypto-card">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            {f'<img src="{crypto["image"]}" width="40" height="40" style="border-radius: 50%; margin-right: 10px;">' if crypto.get("image") else ""}
+                            {f'<img src="{crypto["image"]}"' if crypto.get("image") else ""}
                             <div>
                                 <h4 style="margin: 0; color: #1E293B;">{crypto["name"]}</h4>
                                 <p style="margin: 0; color: #64748B; font-size: 0.9rem;">{crypto["symbol"].upper()}</p>
