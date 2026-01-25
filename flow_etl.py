@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 from sqlalchemy import create_engine
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -33,9 +33,11 @@ PARAMS = {
 
 # Modelo Pydantic
 class CryptoData(BaseModel):
-    id_moeda: str
-    simbolo: str
-    rank_valor_de_mercado: Optional[int] = None
+    id: str = Field(..., description="ID da Moeda")
+    symbol: str
+    name: str
+    image: Optional[str] = None
+    market_cap_rank: Optional[int] = None
     collected_at: datetime
 
 
@@ -67,7 +69,7 @@ def transform(raw_data):
         raise ValueError("Nenhum dado recebido da API")
 
     # Lista de colunas
-    selected_columns = ["id", "symbol", "market_cap_rank"]
+    selected_columns = ["id", "symbol", "name", "image", "market_cap_rank"]
 
     # Cria o DataFrame
     df = pd.DataFrame(raw_data)
@@ -80,15 +82,19 @@ def transform(raw_data):
     df["collected_at"] = datetime.utcnow()
 
     # Renomear colunas para português
+    """
     column_mapping = {
         "id": "id_moeda",
         "symbol": "simbolo",
+        "name": "nome",
         "market_cap_rank": "rank_valor_de_mercado",
     }
+
 
     # Aplicar renomeação
     existing_mapping = {k: v for k, v in column_mapping.items() if k in df.columns}
     df = df.rename(columns=existing_mapping)
+    """
 
     # validação Pydantic
     validated_data = []
