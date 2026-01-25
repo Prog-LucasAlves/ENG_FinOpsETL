@@ -98,7 +98,7 @@ class CrytoData:
         query = """
         WITH RankeData AS (
             SELECT *,
-                   ROW_NUMBER() OVER (PARTITION BY id_moeda ORDER BY collected_at DESC) AS rn
+                   ROW_NUMBER() OVER (PARTITION BY id ORDER BY collected_at DESC) AS rn
             FROM crypto
         )
         SELECT id, symbol, name, image, market_cap_rank, collected_at
