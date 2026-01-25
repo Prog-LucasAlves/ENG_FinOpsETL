@@ -3,19 +3,13 @@ import requests
 import pandas as pd
 from sqlalchemy import create_engine
 from datetime import datetime
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Configurações
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
-
-# DB_HOST = os.getenv("DB_HOST")
-# DB_PORT = os.getenv("DB_PORT")
-# DB_NAME = os.getenv("DB_NAME")
-# DB_USER = os.getenv("DB_USER")
-# DB_PASSWORD = os.getenv("DB_PASSWORD")
-
 
 DB_HOST = variables.get("dbhost")
 DB_PORT = variables.get("dbport")
@@ -28,13 +22,17 @@ DB_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 # Parâmetros da API
 PARAMS = {
     "vs_currency": "brl",  # Moeda em Reais
-    "ids": "bitcoin,ethereum,cardano,ripple,binancecoin,solana,dogecoin,polkadot,matic-network,stellar",  # Top 10 criptomoedas
     "order": "market_cap_desc",
-    "per_page": 10,
+    "per_page": 100,
     "page": 1,
     "sparkline": "false",
     "price_change_percentage": "24h,7d",
 }
+
+
+# Modelo Pydantic
+class CryptoData(BaseModel):
+    id_moeda: str
 
 
 @task(
@@ -65,7 +63,7 @@ def transform(raw_data):
         raise ValueError("Nenhum dado recebido da API")
 
     # Lista de colunas
-    selected_columns = ["id", "symbol"]
+    selected_columns = ["id", "symbol", "market_cap_rank"]
 
     # Cria o DataFrame
     df = pd.DataFrame(raw_data)
@@ -78,17 +76,33 @@ def transform(raw_data):
     df["collected_at"] = datetime.utcnow()
 
     # Renomear colunas para português
-    column_mapping = {"id": "id_moeda", "symbol": "simbolo"}
+    column_mapping = {
+        "id": "id_moeda",
+        "symbol": "simbolo",
+        "market_cap_rank": "rank_valor_de_mercado",
+    }
 
     # Aplicar renomeação
     existing_mapping = {k: v for k, v in column_mapping.items() if k in df.columns}
     df = df.rename(columns=existing_mapping)
 
+    # validação Pydantic
+    validated_data = []
+    for _, row in df.iterrows():
+        try:
+            crypto = CryptoData(**row.to_dict())
+            validated_data.append(crypto.dict())
+        except Exception as e:
+            print(f"❌ Erro de validação Pydantic para linha {row.to_dict()}: {e}")
+            continue
+
     print(f"📊 DataFrame transformado. Shape: {df.shape}")
     print("💰 Banco de Dados:")
     for _, row in df.head(3).iterrows():
-        print(f"  {row.get('id_moeda', 'N/A')} - {row.get('simbolo', 'N/A')}")
-    return df
+        print(
+            f"  {row.get('id_moeda', 'N/A')} - {row.get('simbolo', 'N/A')} - {row.get('rank_valor_de_mercado', 'N/A')}",
+        )
+    return validated_data
 
 
 @task
@@ -99,7 +113,7 @@ def load(df):
 
         # Verifica conexão com o banco de dados
         with engine.connect():
-            print(f"🔗 Conexão com banco estabelecida: {DB_URL.split('@')[-1]}")
+            print("🔗 Conexão com banco estabelecida")
 
         # Salvar os dados no banco de dados
         df.to_sql("crypto", engine, if_exists="append", index=False)
