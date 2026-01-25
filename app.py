@@ -334,7 +334,13 @@ def display_overview(crypto_data):
     )
 
     # Exibir tabela
-    st.dataframe(display_df, use_container_width=True, height=400, hide_index=True)
+    st.dataframe(
+        display_df,
+        width="content",
+        hide_index=True,
+        height=800,
+        column_config={"imagem": st.column_config.ImageColumn("Logo", width="small")},
+    )
 
     # Gráfico de distribuição de ranks
     st.markdown("---")
