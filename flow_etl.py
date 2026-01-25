@@ -96,13 +96,16 @@ def transform(raw_data):
             print(f"❌ Erro de validação Pydantic para linha {row.to_dict()}: {e}")
             continue
 
+    # Cria um novo DataFrame com os dados validados
+    df_validated = pd.DataFrame(validated_data)
+
     print(f"📊 DataFrame transformado. Shape: {df.shape}")
     print("💰 Banco de Dados:")
     for _, row in df.head(3).iterrows():
         print(
             f"  {row.get('id_moeda', 'N/A')} - {row.get('simbolo', 'N/A')} - {row.get('rank_valor_de_mercado', 'N/A')}",
         )
-    return validated_data
+    return df_validated
 
 
 @task
