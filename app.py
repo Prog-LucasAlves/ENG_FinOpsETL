@@ -140,7 +140,7 @@ def display_crypto_card(crypto: pd.Series, col):
         st.markdown(f"""
                     <div class="crypto-card">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            {f'<img src="{crypto["image"]}"' if crypto.get("image") else ""}
+                            {f'<img src="{crypto["image"]}" width="40" height="40" style="border-radius: 50%; margin-right: 10px;">' if crypto.get("image") else ""}
                             <div>
                                 <h4 style="margin: 0; color: #1E293B;">{crypto["name"]}</h4>
                                 <p style="margin: 0; color: #64748B; font-size: 0.9rem;">{crypto["symbol"].upper()}</p>
@@ -310,28 +310,10 @@ def display_overview(crypto_data):
     )
     display_df["symbol"] = display_df["symbol"].str.upper()
 
-    # Adicionar coluna de imagem como HTML
-    def make_image_html(url):
-        if pd.isna(url):
-            return "Sem imagem"
-        return f'<img src="{url}" width="30" height="30" style="border-radius: 50%;">'
-
-    display_df["imagem"] = display_df["image"].apply(make_image_html)
-
     # Selecionar e ordenar colunas
     display_df = display_df[
         ["imagem", "name", "symbol", "market_cap_rank", "collected_at", "id"]
     ]
-    display_df = display_df.rename(
-        columns={
-            "imagem": " ",
-            "name": "Nome",
-            "symbol": "Símbolo",
-            "market_cap_rank": "Rank",
-            "collected_at": "Última Atualização",
-            "id": "ID",
-        },
-    )
 
     # Exibir tabela
     st.dataframe(
