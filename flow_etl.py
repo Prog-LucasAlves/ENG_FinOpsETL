@@ -4,6 +4,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,6 +34,9 @@ PARAMS = {
 # Modelo Pydantic
 class CryptoData(BaseModel):
     id_moeda: str
+    simbolo: str
+    rank_valor_de_mercado: Optional[int] = None
+    collected_at: datetime
 
 
 @task(
