@@ -36,11 +36,19 @@ PARAMS = {
 # Modelo Pydantic
 class CryptoData(BaseModel):
     id: str = Field(..., description="ID da Moeda")
-    symbol: str
-    name: str
-    image: Optional[str] = None
-    market_cap_rank: Optional[int] = None
-    current_price: float
+    symbol: str = Field(..., description="Símbolo da Moeda")
+    name: str = Field(..., description="Nome da Moeda")
+    image: Optional[str] = Field(None, description="URL da imagem da Moeda")
+    current_price: float = Field(
+        ...,
+        description="Preço Atual da Moeda em Moeda Corrente",
+    )
+    market_cap: float = Field(..., description="Capitalização de Mercado da Moeda")
+    market_cap_rank: Optional[int] = Field(
+        None,
+        description="Ranking das Moedas por Capitalização de Mercado",
+    )
+
     collected_at: datetime
 
 
@@ -90,21 +98,6 @@ def transform(raw_data):
 
     # Adicionar timestamp
     df["collected_at"] = datetime.now(timezone.utc)
-
-    # Renomear colunas para português
-    """
-    column_mapping = {
-        "id": "id_moeda",
-        "symbol": "simbolo",
-        "name": "nome",
-        "market_cap_rank": "rank_valor_de_mercado",
-    }
-
-
-    # Aplicar renomeação
-    existing_mapping = {k: v for k, v in column_mapping.items() if k in df.columns}
-    df = df.rename(columns=existing_mapping)
-    """
 
     # validação Pydantic
     validated_data = []
