@@ -2,7 +2,7 @@ from prefect import flow, task, variables
 import requests
 import pandas as pd
 from sqlalchemy import create_engine
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
 from dotenv import load_dotenv
@@ -79,9 +79,7 @@ def transform(raw_data):
     df = df[available_columns]
 
     # Adicionar timestamp
-    df["collected_at"] = datetime.now - pd.Timedelta(
-        hours=3,
-    )  # Ajuste para o horário de Brasília
+    df["collected_at"] = datetime.now(timezone.utc) - pd.Timedelta(hours=3)
 
     # Renomear colunas para português
     """
