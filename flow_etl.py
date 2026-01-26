@@ -79,7 +79,7 @@ def transform(raw_data):
     df = df[available_columns]
 
     # Adicionar timestamp
-    df["collected_at"] = datetime.now(timezone.utc) - pd.Timedelta(hours=3)
+    df["collected_at"] = datetime.now(timezone.utc)
 
     # Renomear colunas para português
     """
@@ -113,7 +113,7 @@ def transform(raw_data):
     print("💰 Banco de Dados:")
     for _, row in df.head(3).iterrows():
         print(
-            f"  {row.get('id_moeda', 'N/A')} - {row.get('simbolo', 'N/A')} - {row.get('rank_valor_de_mercado', 'N/A')}",
+            f"  {row.get('id', 'N/A')} - {row.get('symbol', 'N/A')} - {row.get('market_cap_rank', 'N/A')}",
         )
     return df_validated
 
