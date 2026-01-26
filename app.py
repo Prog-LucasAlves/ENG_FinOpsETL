@@ -322,16 +322,13 @@ def display_overview(crypto_data):
         st.metric("Total de Criptomoedas", total_cryptos)
 
     with col2:
-        ranked_cryptos = latest_data["market_cap_rank"].notna().sum()
-        st.metric("Com Rank", ranked_cryptos)
-
-    with col3:
-        latest_update = latest_data["collected_at"].max()
-        st.metric("Última Atualização", latest_update.strftime("%H:%M"))
-
-    with col4:
-        unique_symbols = latest_data["symbol"].nunique()
-        st.metric("Símbolos Únicos", unique_symbols)
+        average_price_crypto = latest_data["current_price"].mean(skipna=True)
+        average_price_crypto = (
+            f"R$ {average_price_crypto:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+        st.metric("Média de Preço", average_price_crypto)
 
     st.markdown("---")
 
@@ -369,6 +366,7 @@ def display_overview(crypto_data):
             "name",
             "symbol",
             "market_cap_rank",
+            "current_price",
         ]
     ]
 
@@ -392,6 +390,7 @@ def display_overview(crypto_data):
             "name": st.column_config.TextColumn("CryptoMoeda", width="medium"),
             "symbol": st.column_config.TextColumn("Símbolo", width="small"),
             "market_cap_rank": st.column_config.NumberColumn("Rank"),
+            "current_price": st.column_config.TextColumn("Preço"),
         },
     )
 
