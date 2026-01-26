@@ -86,6 +86,7 @@ def transform(raw_data):
         "name",
         "image",
         "current_price",
+        "market_cap",
         "market_cap_rank",
     ]
 
