@@ -324,7 +324,15 @@ def display_overview(crypto_data):
 
     # Selecionar e ordenar colunas
     display_df = display_df[
-        ["image", "name", "symbol", "market_cap_rank", "collected_at", "id"]
+        [
+            "image",
+            "name",
+            "symbol",
+            "market_cap_rank",
+            "current_price",
+            "collected_at",
+            "id",
+        ]
     ]
 
     # Exibir tabela
@@ -333,7 +341,18 @@ def display_overview(crypto_data):
         width="content",
         hide_index=True,
         height=800,
-        column_config={"image": st.column_config.ImageColumn("Logo", width="small")},
+        column_config={
+            "image": st.column_config.ImageColumn("Logo", width="small"),
+            "name": st.column_config.TextColumn("Nome", width="large"),
+            "symbol": st.column_config.TextColumn("Símbolo"),
+            "market_cap_rank": st.column_config.NumberColumn("Rank"),
+            "current_price": st.column_config.NumberColumn(
+                "Preço",
+                format="R$ %d",
+            ),
+            "collected_at": st.column_config.TextColumn("Atualizado"),
+            "id": st.column_config.TextColumn("ID"),
+        },
     )
 
     # Gráfico de distribuição de ranks
