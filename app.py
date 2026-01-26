@@ -101,7 +101,7 @@ class CrytoData:
                    ROW_NUMBER() OVER (PARTITION BY id ORDER BY collected_at DESC) AS rn
             FROM crypto
         )
-        SELECT id, symbol, name, image, market_cap_rank, collected_at
+        SELECT id, symbol, name, image, current_price, market_cap_rank, collected_at
         FROM RankeData
         WHERE rn =1
         ORDER BY market_cap_rank NULLS LAST, symbol
@@ -120,7 +120,7 @@ class CrytoData:
         """
         cutoff_date = datetime.now() - timedelta(days=days)
         query = """
-        SELECT id, symbol, name, image, market_cap_rank, collected_at
+        SELECT id, symbol, name, image, current_price, market_cap_rank, collected_at
         FROM crypto
         WHERE collected_at >= %s
         ORDER BY collected_at DESC, market_cap_rank
@@ -148,9 +148,9 @@ def display_crypto_card(crypto: pd.Series, col):
                             </div>
                         </div>
                         {f'<p style="margin: 5px 0; color: #475569;"><strong>Rank:</strong> #{crypto["market_cap_rank"]}</p>' if pd.notna(crypto.get("market_cap_rank")) else ""}
-                            <p style="margin: 5px 0; color: #475569; font-size: 0.8rem;">
-                                <strong>ID:</strong> {crypto["id"]}
-                            </p>
+                            <p style="margin: 5px 0; color: #475569; font-size: 0.8rem;"><strong>ID:</strong> {crypto["id"]}</p>
+                            <p style="margin: 5px 0; color: #475569;"><strong>Preço:</strong> {crypto["current_price"]}</p>
+
                             <p style="margin: 5px 0; color: #64748B; font-size: 0.8rem;">
                                  Última atualização:<br>
                                 {crypto["collected_at"].strftime("%d/%m/%Y %H:%M")}
