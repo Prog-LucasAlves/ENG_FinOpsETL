@@ -369,7 +369,6 @@ def display_overview(crypto_data):
             "name",
             "symbol",
             "market_cap_rank",
-            "current_price",
         ]
     ]
 
@@ -393,7 +392,6 @@ def display_overview(crypto_data):
             "name": st.column_config.TextColumn("CryptoMoeda", width="medium"),
             "symbol": st.column_config.TextColumn("Símbolo", width="small"),
             "market_cap_rank": st.column_config.NumberColumn("Rank"),
-            "current_price": st.column_config.TextColumn("Preço"),
         },
     )
 
