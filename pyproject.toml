@@ -14,7 +14,6 @@ dependencies = [
     "requests>=2.32.5",
     "sqlalchemy>=2.0.46",
     "streamlit>=1.53.1",
-    "types-pytz>=2025.2.0.20251108",
 ]
 
 [dependency-groups]
