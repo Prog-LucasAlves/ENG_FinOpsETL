@@ -79,7 +79,9 @@ def transform(raw_data):
     df = df[available_columns]
 
     # Adicionar timestamp
-    df["collected_at"] = datetime.utcnow()
+    df["collected_at"] = datetime.now - pd.Timedelta(
+        hours=3,
+    )  # Ajuste para o horário de Brasília
 
     # Renomear colunas para português
     """
