@@ -5,6 +5,9 @@ import warnings
 import plotly.express as px
 from datetime import datetime, timedelta
 import os
+import dotenv
+import pytz
+from prefect.settings import PREFECT_API_URL, PREFECT_API_KEY
 
 warnings.filterwarnings("ignore")
 
@@ -137,6 +140,11 @@ def display_crypto_card(crypto: pd.Series, col):
         col: Coluna do Streamlit para exibição
     """
     with col:
+        price_card = (
+            f"{crypto['current_price']:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
         st.markdown(
             f"""
                     <div class="crypto-card">
@@ -148,13 +156,8 @@ def display_crypto_card(crypto: pd.Series, col):
                             </div>
                         </div>
                         {f'<p style="margin: 5px 0; color: #475569;"><strong>Rank:</strong> #{crypto["market_cap_rank"]}</p>' if pd.notna(crypto.get("market_cap_rank")) else ""}
-                            <p style="margin: 5px 0; color: #475569; font-size: 0.8rem;"><strong>ID:</strong> {crypto["id"]}</p>
-                            <p style="margin: 5px 0; color: #475569;"><strong>Preço:</strong> {crypto["current_price"]}</p>
-
-                            <p style="margin: 5px 0; color: #64748B; font-size: 0.8rem;">
-                                 Última atualização:<br>
-                                {crypto["collected_at"].strftime("%d/%m/%Y %H:%M")}
-                            </p>
+                            <p style="margin: 5px 0; color: #475569;"><strong>ID:</strong> {crypto["id"]}</p>
+                            <p style="margin: 5px 0; color: #475569;"><strong>Preço:</strong> R$ {price_card}</p>
                     </div>
                         """,
             unsafe_allow_html=True,
@@ -165,6 +168,7 @@ def main():
     """
     Configurações do banco de dados
     """
+    dotenv.load_dotenv()
     DB_URL = os.getenv("DB_URL")
     crypto_data = CrytoData(DB_URL)
 
@@ -172,9 +176,9 @@ def main():
     with st.sidebar:
         st.markdown(
             """
-                    <div style="text-align: center; margin-botton: 2rem;>
-                        <h1 style="color: #3B82F6;">💰</h1>
-                        <h2 style="color: #1E3A8A;">Crypto Dashboard</h2>
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <h1 style="color: #3B82F6; font-size: 7rem;">🪙​</h1>
+                        <h2 style="color: #3898e7; font-size: 2rem;">Crypto Dashboard</h2>
                         <p style="color: #64748B;">Monitoramento em tempo real</p>
                     </div>
                     """,
@@ -226,13 +230,49 @@ def main():
         st.markdown("---")
 
         # Informações
+
+        ### Ajustar data de atualização
+        latest_timestamp = latest_data["collected_at"].max()
+        # Se tiver fuso horário UTC, converter para Brasília
+        if latest_timestamp.tz is not None:
+            brasilia_tz = pytz.timezone("America/Sao_Paulo")
+            latest_brasilia = latest_timestamp.astimezone(brasilia_tz)
+            formatted_date = latest_brasilia.strftime("%d/%m/%Y %H:%M:%S")
+        else:
+            formatted_date = latest_timestamp.strftime("%d/%m/%Y %H:%M:%S")
+
+        ### Criar Status Prefect Cloud
+        try:
+            # Verificar configurações
+            api_url = PREFECT_API_URL.value()
+            api_key = PREFECT_API_KEY.value() if PREFECT_API_KEY else None
+
+            if api_url and api_key:
+                if "prefect.cloud" in api_url:
+                    etl_status = "✅ Conectado ao Prefect Cloud"
+                else:
+                    etl_status = "🔗 Conectado ao servidor local"
+            else:
+                etl_status = "⚙️ Configure PREFECT_API_URL e PREFECT_API_KEY"
+
+        except Exception as e:
+            etl_status = f"❌ Erro: {str(e)[:50]}"
+
+        ### Criar Status do banco
+        status = (
+            "✅ Conectado ao PostgreSQL"
+            if crypto_data is not None
+            else "⏳ Carregando..."
+        )
+
         st.markdown("### ℹ️ Informações")
         st.markdown(
-            """
+            f"""
         <div class="info-box">
-            <p><strong>Dados atualizados:</strong> Última coleta de cada moeda</p>
-            <p><strong>Fonte:</strong> CoinGecko API</p>
-            <p><strong>Atualização:</strong> Em tempo real via ETL</p>
+            <p style="color: #64748B;"><strong>Atualização:</strong> {formatted_date}</p>
+            <p style="color: #64748B;"><strong>Fonte:</strong> CoinGecko API</p>
+            <p style="color: #64748B;"><strong>ETL(Prefect Cloud):</strong> {etl_status}
+            <p style="color: #64748B;"><strong> Render PostgreSQL:</strong> {status}</p>
         </div>
         """,
             unsafe_allow_html=True,
@@ -330,28 +370,30 @@ def display_overview(crypto_data):
             "symbol",
             "market_cap_rank",
             "current_price",
-            "collected_at",
-            "id",
         ]
     ]
+
+    def format_price(price):
+        if pd.isna(price):
+            return ""
+
+        price_formatted = f"R$ {price:,.2f}"
+        return price_formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+
+    display_df["current_price"] = display_df["current_price"].apply(format_price)
 
     # Exibir tabela
     st.dataframe(
         display_df,
         width="content",
         hide_index=True,
-        height=800,
+        height=1500,
         column_config={
             "image": st.column_config.ImageColumn("Logo", width="small"),
-            "name": st.column_config.TextColumn("Nome", width="large"),
-            "symbol": st.column_config.TextColumn("Símbolo"),
+            "name": st.column_config.TextColumn("CryptoMoeda", width="medium"),
+            "symbol": st.column_config.TextColumn("Símbolo", width="small"),
             "market_cap_rank": st.column_config.NumberColumn("Rank"),
-            "current_price": st.column_config.NumberColumn(
-                "Preço",
-                format="R$ %d",
-            ),
-            "collected_at": st.column_config.TextColumn("Atualizado"),
-            "id": st.column_config.TextColumn("ID"),
+            "current_price": st.column_config.TextColumn("Preço"),
         },
     )
 
