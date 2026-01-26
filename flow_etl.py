@@ -12,6 +12,8 @@ load_dotenv()
 # Configurações
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
 
+# https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&per_page=100
+
 DB_HOST = variables.get("dbhost")
 DB_PORT = variables.get("dbport")
 DB_NAME = variables.get("dbname")
@@ -38,6 +40,7 @@ class CryptoData(BaseModel):
     name: str
     image: Optional[str] = None
     market_cap_rank: Optional[int] = None
+    current_price: float
     collected_at: datetime
 
 
@@ -69,7 +72,14 @@ def transform(raw_data):
         raise ValueError("Nenhum dado recebido da API")
 
     # Lista de colunas
-    selected_columns = ["id", "symbol", "name", "image", "market_cap_rank"]
+    selected_columns = [
+        "id",
+        "symbol",
+        "name",
+        "image",
+        "current_price",
+        "market_cap_rank",
+    ]
 
     # Cria o DataFrame
     df = pd.DataFrame(raw_data)
