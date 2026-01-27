@@ -221,31 +221,16 @@ def main():
         # Informações 1
         st.header("📢 Últimas Notícias")
         st.caption("Notícias em tempo atualizado - Fonte: Darqube")
+        TOKEN = os.getenv("TOKEN")
 
-        news_widget = """
-    <iframe
-        style="border: none; width:100%; height: 990px; border-radius: 10px;"
-        data-widget-name="NewsWidget"
-        src="https://widget.darqube.com/news-widget?token=69782c7b09c5b9c084bc0b1d"
-        id="NewsWidget-teu68pe">
-    </iframe>
-
-    <script>
-      window.top.addEventListener("message", function(msg) {
-        const widget = document.getElementById('NewsWidget-teu68pe');
-
-        if (!widget) return;
-
-        const styles = msg.data?.styles;
-        const token = msg.data?.token;
-        const urlToken = new URL(widget.src)?.searchParams?.get?.('token');
-
-        if (styles && token === urlToken) {
-          Object.keys(styles).forEach(key => widget.style.setProperty(key, styles[key]))
-        }
-      });
-    </script>
-    """
+        news_widget = f"""
+            <iframe
+                style="border: none; width:100%; height: 999px; border-radius: 10px;"
+                data-widget-name="NewsWidget"
+                src="https://widget.darqube.com/news-widget?token={TOKEN}"
+                id="NewsWidget-teu68pe">
+            </iframe>
+            """
 
         # Incorporar o widget
         st.components.v1.html(news_widget, height=1000)
