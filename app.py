@@ -34,7 +34,7 @@ st.markdown(
         font-size: 1.5rem;
         color: #2563EB;
         margin-top: 1.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.1rem;
         font-weight: 600;
     }
     .metric-card {
@@ -104,7 +104,7 @@ class CrytoData:
                    ROW_NUMBER() OVER (PARTITION BY id ORDER BY collected_at DESC) AS rn
             FROM crypto
         )
-        SELECT id, symbol, name, image, current_price, market_cap_rank, collected_at
+        SELECT id, symbol, name, image, current_price, market_cap, market_cap_rank, collected_at
         FROM RankeData
         WHERE rn =1
         ORDER BY market_cap_rank NULLS LAST, symbol
@@ -123,7 +123,7 @@ class CrytoData:
         """
         cutoff_date = datetime.now() - timedelta(days=days)
         query = """
-        SELECT id, symbol, name, image, current_price, market_cap_rank, collected_at
+        SELECT id, symbol, name, image, current_price, market_cap, market_cap_rank, collected_at
         FROM crypto
         WHERE collected_at >= %s
         ORDER BY collected_at DESC, market_cap_rank
@@ -140,16 +140,22 @@ def display_crypto_card(crypto: pd.Series, col):
         col: Coluna do Streamlit para exibição
     """
     with col:
-        price_card = (
+        current_price_card = (
             f"{crypto['current_price']:,.2f}".replace(",", "X")
             .replace(".", ",")
             .replace("X", ".")
         )
+        market_cap_card = (
+            f"{crypto['market_cap']:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+
         st.markdown(
             f"""
                     <div class="crypto-card">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            {f'<img src="{crypto["image"]}" width="40" height="40" style="border-radius: 50%; margin-right: 10px;">' if crypto.get("image") else ""}
+                            {f'<img src="{crypto["image"]}" width="50" height="50" style="border-radius: 50%; margin-right: 10px;">' if crypto.get("image") else ""}
                             <div>
                                 <h4 style="margin: 0; color: #1E293B;">{crypto["name"]}</h4>
                                 <p style="margin: 0; color: #64748B; font-size: 0.9rem;">{crypto["symbol"].upper()}</p>
@@ -157,7 +163,8 @@ def display_crypto_card(crypto: pd.Series, col):
                         </div>
                         {f'<p style="margin: 5px 0; color: #475569;"><strong>Rank:</strong> #{crypto["market_cap_rank"]}</p>' if pd.notna(crypto.get("market_cap_rank")) else ""}
                             <p style="margin: 5px 0; color: #475569;"><strong>ID:</strong> {crypto["id"]}</p>
-                            <p style="margin: 5px 0; color: #475569;"><strong>Preço:</strong> R$ {price_card}</p>
+                            <p style="margin: 5px 0; color: #475569;"><strong>Preço:</strong> R$ {current_price_card}</p>
+                            <p style="margin: 5px 0; color: #475569;"><strong>Market Cap:</strong> R$ {market_cap_card}</p>
                     </div>
                         """,
             unsafe_allow_html=True,
@@ -209,27 +216,43 @@ def main():
 
         st.markdown("---")
 
-        # Estatísticas rápidas
-        st.markdown("### 📊 Estatísticas")
-        try:
-            latest_data = crypto_data.get_latest_data()
-            total_cryptos = len(latest_data)
-            top_rank = latest_data["market_cap_rank"].min()
+        latest_data = crypto_data.get_latest_data()
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Total de Moedas", total_cryptos)
-            with col2:
-                st.metric(
-                    "Melhor Rank",
-                    f"#{int(top_rank)}" if pd.notna(top_rank) else "N/A",
-                )
-        except Exception:
-            st.info("Conecte-se ao banco para ver estatísticas")
+        # Informações 1
+        st.header("📢 Últimas Notícias")
+        st.caption("Notícias em tempo atualizado - Fonte: Darqube")
+
+        news_widget = """
+    <iframe
+        style="border: none; width:100%; height: 990px; border-radius: 10px;"
+        data-widget-name="NewsWidget"
+        src="https://widget.darqube.com/news-widget?token=69782c7b09c5b9c084bc0b1d"
+        id="NewsWidget-teu68pe">
+    </iframe>
+
+    <script>
+      window.top.addEventListener("message", function(msg) {
+        const widget = document.getElementById('NewsWidget-teu68pe');
+
+        if (!widget) return;
+
+        const styles = msg.data?.styles;
+        const token = msg.data?.token;
+        const urlToken = new URL(widget.src)?.searchParams?.get?.('token');
+
+        if (styles && token === urlToken) {
+          Object.keys(styles).forEach(key => widget.style.setProperty(key, styles[key]))
+        }
+      });
+    </script>
+    """
+
+        # Incorporar o widget
+        st.components.v1.html(news_widget, height=1000)
 
         st.markdown("---")
 
-        # Informações
+        # Informações 2
 
         ### Ajustar data de atualização
         latest_timestamp = latest_data["collected_at"].max()
@@ -315,7 +338,7 @@ def display_overview(crypto_data):
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         total_cryptos = len(latest_data)
@@ -328,7 +351,16 @@ def display_overview(crypto_data):
             .replace(".", ",")
             .replace("X", ".")
         )
-        st.metric("Média de Preço", average_price_crypto)
+        st.metric("Média de Preço das 100 Maiores Criptomoedas", average_price_crypto)
+
+    with col3:
+        total_market_cap = latest_data["market_cap"].sum()
+        total_market_cap = (
+            f"R$ {total_market_cap:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+        st.metric("Market Cap Total das 100 Maiores Criptomoedas", total_market_cap)
 
     st.markdown("---")
 
@@ -361,13 +393,7 @@ def display_overview(crypto_data):
 
     # Selecionar e ordenar colunas
     display_df = display_df[
-        [
-            "image",
-            "name",
-            "symbol",
-            "market_cap_rank",
-            "current_price",
-        ]
+        ["image", "name", "symbol", "market_cap_rank", "current_price", "market_cap"]
     ]
 
     def format_price(price):
@@ -378,10 +404,11 @@ def display_overview(crypto_data):
         return price_formatted.replace(",", "X").replace(".", ",").replace("X", ".")
 
     display_df["current_price"] = display_df["current_price"].apply(format_price)
+    display_df["market_cap"] = display_df["market_cap"].apply(format_price)
 
     # Exibir tabela
     st.dataframe(
-        display_df,
+        display_df[5:],
         width="content",
         hide_index=True,
         height=1500,
@@ -391,6 +418,7 @@ def display_overview(crypto_data):
             "symbol": st.column_config.TextColumn("Símbolo", width="small"),
             "market_cap_rank": st.column_config.NumberColumn("Rank"),
             "current_price": st.column_config.TextColumn("Preço"),
+            "market_cap": st.column_config.TextColumn("Market Cap"),
         },
     )
 
