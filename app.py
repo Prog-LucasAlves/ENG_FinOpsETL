@@ -51,6 +51,7 @@ st.markdown(
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         transition: transform 0.3s;
+        margin-bottom: 1rem;
     }
     .crypto-card:hover {
         transform: translateY(-5px);
@@ -129,6 +130,30 @@ class CrytoData:
         ORDER BY collected_at DESC, market_cap_rank
         """
         return pd.read_sql(query, self.engine, params=(cutoff_date,))
+
+    def get_top_cryptos(self, limit: int = 10) -> pd.DataFrame:
+        """
+        Obtém as top N criptomoedas por rank
+
+        Args:
+            limit (int): Número de moedas top a serem retornadas
+
+        Returns:
+            pd.DataFrame: DataFrame com as moedas top
+        """
+        query = """
+        WITH RankedData AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY id ORDER BY collected_at DESC) AS rn
+            FROM crypto
+        )
+        SELECT id, symbol, name, image, current_price, market_cap, market_cap_rank
+        FROM RankedData
+        WHERE rn = 1 AND market_cap_rank IS NOT NULL
+        ORDER BY market_cap_rank
+        LIMIT %s
+        """
+        return pd.read_sql(query, self.engine, params=(limit,))
 
 
 def display_crypto_card(crypto: pd.Series, col):
@@ -218,7 +243,8 @@ def main():
 
         latest_data = crypto_data.get_latest_data()
 
-        # Informações 1
+        ### Informações 1
+
         st.header("📢 Últimas Notícias")
         st.caption("Notícias em tempo atualizado - Fonte: Darqube")
         TOKEN = os.getenv("TOKEN")
@@ -237,11 +263,11 @@ def main():
 
         st.markdown("---")
 
-        # Informações 2
+        ### Informações 2
 
-        ### Ajustar data de atualização
+        # Ajustar data de atualização
         latest_timestamp = latest_data["collected_at"].max()
-        # Se tiver fuso horário UTC, converter para Brasília
+
         if latest_timestamp.tz is not None:
             brasilia_tz = pytz.timezone("America/Sao_Paulo")
             latest_brasilia = latest_timestamp.astimezone(brasilia_tz)
@@ -249,7 +275,7 @@ def main():
         else:
             formatted_date = latest_timestamp.strftime("%d/%m/%Y %H:%M:%S")
 
-        ### Criar Status Prefect Cloud
+        # Criar Status Prefect Cloud
         try:
             # Verificar configurações
             api_url = PREFECT_API_URL.value()
@@ -349,7 +375,7 @@ def display_overview(crypto_data):
 
     st.markdown("---")
 
-    # Top 5 criptomoedas
+    ### Top 5 criptomoedas
     st.markdown(
         '<h2 class="sub-header">🏆 Top 5 Criptomoedas</h2>',
         unsafe_allow_html=True,
@@ -363,7 +389,7 @@ def display_overview(crypto_data):
 
     st.markdown("---")
 
-    # Tabela completa
+    ### Tabela completa
     st.markdown(
         '<h2 class="sub-header">📋 Todas as Criptomoedas</h2>',
         unsafe_allow_html=True,
@@ -371,9 +397,7 @@ def display_overview(crypto_data):
 
     # Formatar DataFrame para exibição
     display_df = latest_data.copy()
-    display_df["collected_at"] = display_df["collected_at"].dt.strftime(
-        "%d/%m/%Y %H:%M",
-    )
+
     display_df["symbol"] = display_df["symbol"].str.upper()
 
     # Selecionar e ordenar colunas
@@ -428,12 +452,226 @@ def display_overview(crypto_data):
 
 def display_top_n(crypto_data, n):
     """Exibe top N criptomoedas"""
-    ...
+
+    top_cryptos = crypto_data.get_top_cryptos(n)
+
+    if top_cryptos.empty:
+        st.warning(f"Nenhum dado encontrado para as top {n} criptomoedas.")
+        return
+
+    st.markdown(
+        f'<h2 class="sub-header">🏅 Top {n} Criptomoedas por Market Cap</h2>',
+        unsafe_allow_html=True,
+    )
+
+    # Exibir cards em grid
+    cols_per_row = 5
+    rows = (len(top_cryptos) + cols_per_row - 1) // cols_per_row
+
+    for row in range(rows):
+        cols = st.columns(cols_per_row)
+        for col_idx in range(cols_per_row):
+            idx = row * cols_per_row + col_idx
+            if idx < len(top_cryptos):
+                display_crypto_card(top_cryptos.iloc[idx], cols[col_idx])
+
+    st.markdown("---")
+
+    # Gráfico de barras
+    fig = px.bar(top_cryptos, x="symbol")
+
+    fig.update_traces(texttemplate="#%{text}", textposition="outside")
+
+    fig.update_layout(
+        plot_bgcolor="white",
+    )
+
+    fig.update_xaxes(tickangle=45)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+
+    # Tabela Detalhada
 
 
 def display_historical(crypto_data, days):
     """Exibe dados históricos"""
-    ...
+
+    historical_data = crypto_data.get_historical_data(days)
+
+    if historical_data.empty:
+        st.warning("Nenhum dado histórico encontrado.")
+        return
+
+    st.markdown(
+        f'<h2 class="sub-header">📅 Histórico Completo ({days} dias)</h2>',
+        unsafe_allow_html=True,
+    )
+
+    # Métricas
+    unique_cryptos = historical_data["id"].nunique()
+    total_records = len(historical_data)
+    avg_updates = total_records / days if days > 0 else 0
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total de Criptomoedas", unique_cryptos)
+    col2.metric("Total de Registros", total_records)
+    col3.metric("Média de Atualizações/Dia", f"{avg_updates:.1f}")
+
+    st.markdown("---")
+
+    # Gráfico de atualizações ao longo do tempo
+    st.markdown(
+        '<h3 class="sub-header">📊 Atualizações ao Longo do Tempo</h3>',
+        unsafe_allow_html=True,
+    )
+
+    updates_by_day = (
+        historical_data.groupby(historical_data["collected_at"].dt.date)
+        .size()
+        .reset_index(name="count")
+    )
+
+    fig = px.line(
+        updates_by_day,
+        x="collected_at",
+        y="count",
+        title=f"Atualizações por Dia (Últimos {days} dias)",
+        markers=True,
+        line_shape="spline",
+    )
+
+    fig.update_layout(
+        plot_bgcolor="black",
+        paper_bgcolor="black",
+        height=400,
+        xaxis_title="Data",
+        yaxis_title="Número de Atualizações",
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+
+    # Tabela de dados históricos
+    st.markdown(
+        '<h3 class="sub-header">📋 Dados Históricos</h3>',
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        selected_crypto = st.selectbox(
+            "Filtrar por Moeda",
+            ["Todas"] + historical_data["name"].unique().tolist(),
+        )
+
+    with col2:
+        sort_by = st.selectbox(
+            "Ordernar por",
+            [
+                "Data (Mais Recente)",
+                "Data (Mais Antiga)",
+                "Rank (Melhor)",
+                "Rank (Pior)",
+                "Preço(Maior)",
+                "Preço(Menor)",
+            ],
+        )
+
+    # Aplicar filtros
+    filtered_data = historical_data.copy()
+    if selected_crypto != "Todas":
+        filtered_data = filtered_data[filtered_data["name"] == selected_crypto]
+
+        def format_variation(value):
+            if pd.isna(value) or value is None:
+                return ""
+            elif value > 0:
+                return f"🟢 +{value:.2f}%"
+            elif value < 0:
+                return f"🔴 {value:.2f}%"
+            else:
+                return f"🟡 {value:.2f}%"
+
+        # filtered_data["%_Preco_dia_anterior"] = ((filtered_data['current_price'] - filtered_data['current_price'].shift(-1)) / filtered_data['current_price'].shift(1)) * 100
+        filtered_data["%_Preco_dia_anterior"] = (
+            filtered_data["current_price"] / filtered_data["current_price"].shift(-1)
+            - 1
+        ) * 100
+        filtered_data["%_Preco_dia_anterior"] = filtered_data[
+            "%_Preco_dia_anterior"
+        ].apply(format_variation)
+    else:
+        filtered_data["%_Preco_dia_anterior"] = 0
+
+    # Ordenar dados
+    if sort_by == "Data (Mais Recente)":
+        filtered_data = filtered_data.sort_values("collected_at", ascending=False)
+    elif sort_by == "Data (Mais Antiga)":
+        filtered_data = filtered_data.sort_values("collected_at", ascending=True)
+    elif sort_by == "Rank (Melhor)":
+        filtered_data = filtered_data.sort_values("market_cap_rank", ascending=True)
+    elif sort_by == "Rank (Pior)":
+        filtered_data = filtered_data.sort_values("market_cap_rank", ascending=False)
+
+    # Formatar dados para exibição
+    display_df = filtered_data.copy()
+
+    # Acertar data e horas utc -3
+    brasilia_tz = pytz.timezone("America/Sao_Paulo")
+
+    display_df["collected_at"] = (
+        display_df["collected_at"]
+        .dt.tz_convert(brasilia_tz)  # Converter timezone
+        .dt.strftime("%d/%m/%Y %H:%M:%S")  # Formatar
+    )
+    display_df["symbol"] = display_df["symbol"].str.upper()
+    display_df["current_price"] = display_df["current_price"].apply(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+    )
+    display_df["market_cap"] = display_df["market_cap"].apply(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+    )
+
+    # Exibir tabela
+    st.dataframe(
+        display_df[
+            [
+                "name",
+                "symbol",
+                "market_cap_rank",
+                "current_price",
+                "%_Preco_dia_anterior",
+                "market_cap",
+                "collected_at",
+            ]
+        ],
+        hide_index=True,
+        height=600,
+        column_config={
+            "name": st.column_config.TextColumn("Criptomoeda", width="large"),
+            "symbol": st.column_config.TextColumn("Símbolo", width="small"),
+            "market_cap_rank": st.column_config.NumberColumn("Rank", width="small"),
+            "current_price": st.column_config.TextColumn("Preço", width="small"),
+            "%_Preco_dia_anterior": st.column_config.TextColumn(
+                "% Variação",
+                width="small",
+            ),
+            "market_cap": st.column_config.TextColumn("Market Cap", width="small"),
+            "collected_at": st.column_config.TextColumn("Atualizado Em", width="small"),
+        },
+    )
+
+    # Opção para download
+    csv = display_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Download CSV",
+        data=csv,
+        file_name=f"historico_crypto_{days}_dias.csv",
+        mime="text/csv",
+    )
 
 
 def display_specific_crypto(crypto_data, crypto_id, days):
