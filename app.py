@@ -447,7 +447,7 @@ def display_overview(crypto_data):
         color_discrete_sequence=["#3B82F6"],
     )
     fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width=True)
 
 
 def display_top_n(crypto_data, n):
@@ -476,22 +476,6 @@ def display_top_n(crypto_data, n):
                 display_crypto_card(top_cryptos.iloc[idx], cols[col_idx])
 
     st.markdown("---")
-
-    # Gráfico de barras
-    fig = px.bar(top_cryptos, x="symbol")
-
-    fig.update_traces(texttemplate="#%{text}", textposition="outside")
-
-    fig.update_layout(
-        plot_bgcolor="white",
-    )
-
-    fig.update_xaxes(tickangle=45)
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("---")
-
-    # Tabela Detalhada
 
 
 def display_historical(crypto_data, days):
@@ -549,7 +533,7 @@ def display_historical(crypto_data, days):
         yaxis_title="Número de Atualizações",
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width=True)
 
     st.markdown("---")
 
@@ -585,6 +569,7 @@ def display_historical(crypto_data, days):
     if selected_crypto != "Todas":
         filtered_data = filtered_data[filtered_data["name"] == selected_crypto]
 
+        # Variação percentual do preço
         def format_variation(value):
             if pd.isna(value) or value is None:
                 return ""
@@ -595,7 +580,6 @@ def display_historical(crypto_data, days):
             else:
                 return f"🟡 {value:.2f}%"
 
-        # filtered_data["%_Preco_dia_anterior"] = ((filtered_data['current_price'] - filtered_data['current_price'].shift(-1)) / filtered_data['current_price'].shift(1)) * 100
         filtered_data["%_Preco_dia_anterior"] = (
             filtered_data["current_price"] / filtered_data["current_price"].shift(-1)
             - 1
@@ -603,6 +587,7 @@ def display_historical(crypto_data, days):
         filtered_data["%_Preco_dia_anterior"] = filtered_data[
             "%_Preco_dia_anterior"
         ].apply(format_variation)
+
     else:
         filtered_data["%_Preco_dia_anterior"] = 0
 
@@ -615,6 +600,10 @@ def display_historical(crypto_data, days):
         filtered_data = filtered_data.sort_values("market_cap_rank", ascending=True)
     elif sort_by == "Rank (Pior)":
         filtered_data = filtered_data.sort_values("market_cap_rank", ascending=False)
+    elif sort_by == "Preço(Maior)":
+        filtered_data = filtered_data.sort_values("current_price", ascending=False)
+    elif sort_by == "Preço(Menor)":
+        filtered_data = filtered_data.sort_values("current_price", ascending=True)
 
     # Formatar dados para exibição
     display_df = filtered_data.copy()
@@ -672,6 +661,26 @@ def display_historical(crypto_data, days):
         file_name=f"historico_crypto_{days}_dias.csv",
         mime="text/csv",
     )
+
+    if selected_crypto != "Todas":
+        # Gráfico de variação de preço
+        st.markdown("---")
+        st.markdown(
+            f'<h3 class="sub-header">📈 Variação de Preço - {selected_crypto}</h3>',
+            unsafe_allow_html=True,
+        )
+
+        # Grafico de linha do preço
+        fig = px.line(
+            filtered_data,
+            x="collected_at",
+            y="current_price",
+            title=f"Variação de Preço - {selected_crypto}",
+            markers=True,
+            line_shape="spline",
+        )
+        fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", height=400)
+        st.plotly_chart(fig, width=True)
 
 
 def display_specific_crypto(crypto_data, crypto_id, days):

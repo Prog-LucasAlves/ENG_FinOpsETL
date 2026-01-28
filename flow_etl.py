@@ -12,8 +12,6 @@ load_dotenv()
 # Configurações
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
 
-# https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&per_page=100
-
 DB_HOST = variables.get("dbhost")
 DB_PORT = variables.get("dbport")
 DB_NAME = variables.get("dbname")
@@ -48,7 +46,6 @@ class CryptoData(BaseModel):
         None,
         description="Ranking das Moedas por Capitalização de Mercado",
     )
-
     collected_at: datetime
 
 
@@ -59,6 +56,34 @@ class CryptoData(BaseModel):
     timeout_seconds=60,
     tags=["extract", "crypto"],
 )
+# Criar a tabela se não existir
+@task
+def create_table_if_not_exists():
+    """Cria a tabela no banco de dados se ela não existir"""
+    try:
+        engine = create_engine(DB_URL)
+        with engine.connect() as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS crypto (
+                    id VARCHAR(255),
+                    symbol VARCHAR(255),
+                    name VARCHAR(255),
+                    image TEXT,
+                    current_price NUMERIC,
+                    market_cap NUMERIC,
+                    market_cap_rank INTEGER,
+                    collected_at TIMESTAMP WITH TIME ZONE
+                )
+                """,
+            )
+            conn.commit()
+        print("✅ Tabela 'crypto' verificada/criada com sucesso.")
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela: {e}")
+        raise
+
+
 def extract():
     """Extrai dados da API do CoinGecko"""
     try:
@@ -151,6 +176,8 @@ def crypto_etl():
     print("🚀 Iniciando pipeline ETL de criptomoedas...")
     print(f"🌐 API: {COINGECKO_URL}")
     print("💰 Moeda: BRL (Real Brasileiro)")
+
+    create_table_if_not_exists()
 
     # Extrair
     raw_data = extract()
