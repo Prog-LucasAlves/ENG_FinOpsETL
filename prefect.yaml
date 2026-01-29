@@ -27,12 +27,12 @@ pull:
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: Crypto
-  version: null
-  tags: []
+- name: Crypto-ETL-01
+  version: 1.0.0
+  tags: ["crypto", "etl", "production"]
   concurrency_limit: null
   description: Orquestrador principal do ETL
-  entrypoint: flow_etl.py:crypto_etl
+  entrypoint: flows/flow_etl.py:crypto_etl
   parameters: {}
   work_pool:
     name: Data
@@ -40,6 +40,22 @@ deployments:
     job_variables: {}
   schedules:
   - cron: '*/30 * * * *'
+    timezone: UTC
+    day_or: true
+    active: true
+- name: Crypto-ETL-02
+  version: 1.0.0
+  tags: ["crypto", "etl", "production"]
+  concurrency_limit: null
+  description: Orquestrador secundário do ETL
+  entrypoint: flows/flow_ohlc:crypto_etl
+  parameters: {}
+  work_pool:
+    name: Data
+    work_queue_name: null
+    job_variables: {}
+  schedules:
+  - cron: '*/40 * * * *'
     timezone: UTC
     day_or: true
     active: true
