@@ -2,6 +2,7 @@ from prefect import flow, task, variables
 import requests
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy import text
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -70,7 +71,7 @@ def create_table_if_not_exists():
         engine = create_engine(DB_URL)
         with engine.connect() as conn:
             conn.execute(
-                """
+                text("""
                 CREATE TABLE IF NOT EXISTS crypto (
                     id VARCHAR(255),
                     symbol VARCHAR(255),
@@ -81,7 +82,7 @@ def create_table_if_not_exists():
                     market_cap_rank INTEGER,
                     collected_at TIMESTAMP WITH TIME ZONE
                 )
-                """,
+                """),
             )
             conn.commit()
         print("✅ Tabela 'crypto' verificada/criada com sucesso.")
