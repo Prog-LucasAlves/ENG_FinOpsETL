@@ -28,7 +28,7 @@ COINS = ["bitcoin", "xrp"]
 # Modelo Pydantic
 class CryptoData(BaseModel):
     name: str
-    time: datetime
+    collected_at: datetime
     open: float
     high: float
     low: float
@@ -51,9 +51,9 @@ def create_table_if_not_exists():
         with engine.connect() as conn:
             conn.execute(
                 text("""
-                CREATE TABLE IF NOT EXISTS ohlc (
+                CREATE TABLE IF NOT EXISTS crypto_ohlc (
                     name VARCHAR(255),
-                    time TIMESTAMP WITH TIME ZONE,
+                    collected_at TIMESTAMP WITH TIME ZONE,
                     open NUMERIC,
                     high NUMERIC,
                     low NUMERIC,
@@ -76,8 +76,11 @@ def extract():
         response = requests.get(COINGECKO_URL, params=PARAMS)
         if response.status_code == 200:
             data = response.json()
-            df = pd.DataFrame(data)
-            df["time"] = pd.to_datetime(df["time"], unit="ms")
+            df = pd.DataFrame(
+                data,
+                columns=["collected_at", "name", "open", "high", "low", "close"],
+            )
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
             df["name"] = COIN
             yield df
         else:
@@ -142,7 +145,7 @@ def load(df):
         print(f"💾 Dados salvos no banco. {len(df)} registros inseridos.")
 
         # Verificar a inserção dos dados
-        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto", engine)
+        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto_ohlc", engine)
         print(f"📈 Total de registros na tabela: {result['total'].iloc[0]}")
 
     except Exception as e:
