@@ -28,7 +28,7 @@ COINS = ["bitcoin", "xrp"]
 # Modelo Pydantic
 class CryptoData(BaseModel):
     name: str
-    time: datetime
+    collected_at: datetime
     open: float
     high: float
     low: float
@@ -53,7 +53,7 @@ def create_table_if_not_exists():
                 text("""
                 CREATE TABLE IF NOT EXISTS crypto_ohlc (
                     name VARCHAR(255),
-                    time TIMESTAMP WITH TIME ZONE,
+                    collected_at TIMESTAMP WITH TIME ZONE,
                     open NUMERIC,
                     high NUMERIC,
                     low NUMERIC,
@@ -76,8 +76,11 @@ def extract():
         response = requests.get(COINGECKO_URL, params=PARAMS)
         if response.status_code == 200:
             data = response.json()
-            df = pd.DataFrame(data)
-            df["time"] = pd.to_datetime(df["time"], unit="ms")
+            df = pd.DataFrame(
+                data,
+                columns=["collected_at", "nameopen", "high", "low", "close"],
+            )
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
             df["name"] = COIN
             yield df
         else:
