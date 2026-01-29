@@ -47,8 +47,8 @@ deployments:
   version: 1.0.0
   tags: ["crypto", "etl", "production"]
   concurrency_limit: null
-  description: Orquestrador secundário do ETL
-  entrypoint: flows/flow_ohlc:crypto_etl
+  description: Orquestrador secundario do ETL
+  entrypoint: flows/flow_ohlc.py:crypto_etl
   parameters: {}
   work_pool:
     name: Data
