@@ -51,7 +51,7 @@ def create_table_if_not_exists():
         with engine.connect() as conn:
             conn.execute(
                 text("""
-                CREATE TABLE IF NOT EXISTS ohlc (
+                CREATE TABLE IF NOT EXISTS crypto_ohlc (
                     name VARCHAR(255),
                     time TIMESTAMP WITH TIME ZONE,
                     open NUMERIC,
@@ -142,7 +142,7 @@ def load(df):
         print(f"💾 Dados salvos no banco. {len(df)} registros inseridos.")
 
         # Verificar a inserção dos dados
-        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto", engine)
+        result = pd.read_sql("SELECT COUNT(*) as total FROM crypto_ohlc", engine)
         print(f"📈 Total de registros na tabela: {result['total'].iloc[0]}")
 
     except Exception as e:
