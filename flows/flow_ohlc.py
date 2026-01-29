@@ -2,6 +2,7 @@ from prefect import flow, task, variables
 import requests
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy import text
 from datetime import datetime
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -49,7 +50,7 @@ def create_table_if_not_exists():
         engine = create_engine(DB_URL)
         with engine.connect() as conn:
             conn.execute(
-                """
+                text("""
                 CREATE TABLE IF NOT EXISTS ohlc (
                     name VARCHAR(255),
                     time TIMESTAMP WITH TIME ZONE,
@@ -58,7 +59,7 @@ def create_table_if_not_exists():
                     low NUMERIC,
                     close NUMERIC
                 )
-                """,
+                """),
             )
             conn.commit()
         print("✅ Tabela 'ohlc' verificada/criada com sucesso.")
