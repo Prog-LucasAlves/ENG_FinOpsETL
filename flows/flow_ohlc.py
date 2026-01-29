@@ -78,7 +78,7 @@ def extract():
             data = response.json()
             df = pd.DataFrame(
                 data,
-                columns=["collected_at", "nameopen", "high", "low", "close"],
+                columns=["collected_at", "name", "open", "high", "low", "close"],
             )
             df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
             df["name"] = COIN
