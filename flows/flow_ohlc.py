@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+# https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=brl&days=7
+
 # Configurações Banco de Dados
 DB_HOST = variables.get("dbhost")
 DB_PORT = variables.get("dbport")
