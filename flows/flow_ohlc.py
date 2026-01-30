@@ -38,7 +38,7 @@ class CryptoData(BaseModel):
     name="ETL-OHLC",
     retries=3,
     retry_delay_seconds=1,
-    timeout_seconds=60,
+    timeout_seconds=500,
     tags=["extract", "crypto"],
 )
 @task
@@ -131,7 +131,7 @@ def extract():
                     },
                 )
 
-                time.sleep(10)
+            time.sleep(5)
 
         else:
             print(f"❌ Erro na requisição para {COIN}: {response.status_code}")
