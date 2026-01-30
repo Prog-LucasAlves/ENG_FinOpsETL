@@ -5,11 +5,13 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 from datetime import datetime
 from pydantic import BaseModel
+import logfire
 from dotenv import load_dotenv
 import pytz
 
 load_dotenv()
-
+logfire.configure()
+logfire.instrument_pydantic()
 
 # https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=brl&days=7
 
@@ -25,7 +27,7 @@ DB_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 # Pegar os IDs das Criptomoedas no banco de dados
 ...
 
-COINS = ["bitcoin", "xrp"]
+COINS = ["bitcoin", "ripple"]
 
 
 # Modelo Pydantic
@@ -38,6 +40,9 @@ class CryptoData(BaseModel):
     close: float
 
 
+logfire.info("Pipeline ETL-OHLC iniciado")
+
+
 @task(
     name="ETL-OHLC",
     retries=3,
@@ -45,13 +50,15 @@ class CryptoData(BaseModel):
     timeout_seconds=60,
     tags=["extract", "crypto"],
 )
-# Criar a tabela se não existir
 @task
 def create_table_if_not_exists():
     """Cria a tabela no banco de dados se ela não existir"""
     try:
         engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
         with engine.connect() as conn:
+            # Criar tabela se não existir
             conn.execute(
                 text("""
                 CREATE TABLE IF NOT EXISTS crypto_ohlc (
@@ -75,11 +82,13 @@ def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     all_data = []
 
+    # Iterar sobre cada moeda e buscar os dados OHLC
     for COIN in COINS:
         COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
         PARAMS = {"vs_currency": "brl", "days": 7}
         response = requests.get(COINGECKO_URL, params=PARAMS)
         if response.status_code == 200:
+            # Tratar os dados OHLC
             data = response.json()
             print(f"✅ {COIN}: {len(data)} registros obtidos")
 
@@ -177,6 +186,55 @@ def load(df):
         raise
 
 
+@task
+def delete_duplicated_data():
+    """Elimina dados duplicados na tabela crypto_ohlc"""
+    try:
+        engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
+        with engine.connect() as conn:
+            # Eliminar dados duplicados
+            query = text("""
+                DELETE FROM crypto_ohlc a
+                WHERE a.ctid <> (
+                    SELECT min(b.ctid)
+                    FROM crypto_ohlc b
+                    WHERE a.name = b.name
+                    AND a.collected_at = b.collected_at
+                )
+            """)
+            conn.execute(query)
+            conn.commit()
+            print("✅ Dados duplicados eliminados com sucesso.")
+    except Exception as e:
+        print(f"❌ Erro ao eliminar dados duplicados: {e}")
+        raise
+
+
+@task
+def create_view_per_coin():
+    """Cria uma view para cada moeda na tabela crypto_ohlc"""
+    try:
+        engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
+        with engine.connect() as conn:
+            # Criar uma view para cada moeda
+            for coin in COINS:
+                view_name = f"crypto_ohlc_{coin}"
+                query = text(f"""
+                    CREATE OR REPLACE VIEW {view_name} AS
+                    SELECT * FROM crypto_ohlc WHERE name = '{coin}'
+                """)
+                conn.execute(query)
+                conn.commit()
+                print(f"✅ View '{view_name}' criada com sucesso.")
+    except Exception as e:
+        print(f"❌ Erro ao criar views: {e}")
+        raise
+
+
 @flow(name="Fluxo ETL(OHLC) de Criptomoedas", log_prints=True)
 def crypto_etl():
     """Orquestrador secundário do ETL"""
@@ -185,14 +243,20 @@ def crypto_etl():
 
     create_table_if_not_exists()
 
-    # Extrair
+    # Extrai dos dados da API
     raw_data = extract()
 
-    # Transformar
+    # Transformar os dados
     df = transform(raw_data)
 
-    # Carregar
+    # Carregar os dados no banco de dados
     load(df)
+
+    # Eliminar dados duplicados
+    delete_duplicated_data()
+
+    # Criar views por coin
+    create_view_per_coin()
 
     print("✅ Pipeline executado com sucesso!")
     return df
