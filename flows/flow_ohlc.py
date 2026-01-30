@@ -87,7 +87,7 @@ def get_id_coins() -> List[str]:
         raise
 
 
-def extract(COINS):
+def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     all_data = []
 
