@@ -8,6 +8,7 @@
   - [📋 Sobre o Projeto](#-sobre-o-projeto)
   - [✨ Funcionalidades Principais](#-funcionalidades-principais)
   - [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
+  - [🔧 Estrutura do Projeto](#-estrutura-do-projeto)
   - [🚀 Deploy na Render](#-deploy-na-render)
   - [🛠️ Configuração do Ambiente Local](#️-configuração-do-ambiente-local)
 
@@ -43,6 +44,10 @@ FINOPSETL é uma plataforma completa de engenharia de dados financeira que combi
 │  └─────────────┘│
 └─────────────────┘
 ```
+
+## 🔧 Estrutura do Projeto
+
+...
 
 ## 🚀 Deploy na Render
 
@@ -83,7 +88,6 @@ cd ENG_FINOPSETL
 2. Configure o ambiente virtual:
 
 Informações de como instalar o **[UV](https://docs.astral.sh/uv/getting-started/installation/)**
-
 
 ```bash
 uv init
