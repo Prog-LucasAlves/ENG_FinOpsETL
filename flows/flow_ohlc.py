@@ -6,6 +6,7 @@ from sqlalchemy import text
 from datetime import datetime
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from typing import List
 import pytz
 
 load_dotenv()
@@ -20,11 +21,6 @@ DB_USER = variables.get("dbuser")
 DB_PASSWORD = variables.get("dbpassword")
 
 DB_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-# Pegar os IDs das Criptomoedas no banco de dados
-...
-
-COINS = ["bitcoin", "ripple"]
 
 
 # Modelo Pydantic
@@ -72,9 +68,30 @@ def create_table_if_not_exists():
         raise
 
 
-def extract():
+@task
+def get_id_coins() -> List[str]:
+    """Pega os IDs das criptomoedas no banco de dados"""
+    try:
+        engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
+        with engine.connect() as conn:
+            # Query para pegar os IDs unicos das criptomoedas
+            query = text("SELECT DISTINCT id FROM crypto")
+            result = conn.execute(query)
+            coins_ids = [row[0] for row in result]
+            print(f"🔍 IDs das criptomoedas: {coins_ids}")
+            return coins_ids
+    except Exception as e:
+        print(f"❌ Erro ao pegar IDs das criptomoedas: {e}")
+        raise
+
+
+def extract(COINS):
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     all_data = []
+
+    COINS = get_id_coins()
 
     # Iterar sobre cada moeda e buscar os dados OHLC
     for COIN in COINS:
@@ -209,6 +226,8 @@ def delete_duplicated_data():
 @task
 def create_view_per_coin():
     """Cria uma view para cada moeda na tabela crypto_ohlc"""
+    COINS = get_id_coins()
+
     try:
         engine = create_engine(DB_URL)
 
