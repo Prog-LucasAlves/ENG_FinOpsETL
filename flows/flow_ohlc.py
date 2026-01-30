@@ -127,7 +127,7 @@ def transform(raw_data):
     print(f"📊 DataFrame transformado. Shape: {df.shape}")
     for _, row in df.head(3).iterrows():
         print(
-            f"  {row.get('name', 'N/A')} - {row.get('time', 'N/A')} - {row.get('open', 'N/A')}",
+            f"  {row.get('name', 'N/A')} - {row.get('collected_at', 'N/A')} - {row.get('open', 'N/A')}",
         )
     return df_validated
 
