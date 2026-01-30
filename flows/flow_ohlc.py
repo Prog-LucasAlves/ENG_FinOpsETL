@@ -1,9 +1,10 @@
 from prefect import flow, task, variables
+from prefect.tasks import task_input_hash
 import requests
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import List
@@ -92,52 +93,87 @@ def get_id_coins() -> List[str]:
         raise
 
 
-@task(timeout_seconds=600)
+@task(
+    timeout_seconds=600,
+    cache_key_fn=task_input_hash,
+    cache_expiration=timedelta(minutes=10),
+)
 def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     all_data = []
-
     COINS = get_id_coins()
+    total_coins = len(COINS)
+    delay_between_calls = 6
 
     # Iterar sobre cada moeda e buscar os dados OHLC
-    for COIN in COINS:
-        COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
-        PARAMS = {"vs_currency": "brl", "days": 7}
-        response = requests.get(COINGECKO_URL, params=PARAMS)
-        if response.status_code == 200:
-            # Tratar os dados OHLC
-            data = response.json()
-            print(f"✅ {COIN}: {len(data)} registros obtidos")
+    for i, COIN in enumerate(COINS, 1):
+        try:
+            COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
+            PARAMS = {"vs_currency": "brl", "days": 7}
+            HEADERS = {
+                "User-Agent": "Mozilla/5.0 (compatible; YourApp/1.0)",
+                "Accept": "application/json",
+            }
+            session = requests.Session()
+            response = session.get(
+                COINGECKO_URL,
+                params=PARAMS,
+                headers=HEADERS,
+                timeout=30,
+            )
 
-            # Adicionar dados à lista all_data
-            for item in data:
-                timestamp_ms = item[0]
-                open_price = item[1]
-                high_price = item[2]
-                low_price = item[3]
-                close_price = item[4]
+            if response.status_code == 200:
+                data = response.json()
 
-                collected_at = datetime.fromtimestamp(timestamp_ms / 1000.0)
-                collected_at = collected_at.replace(tzinfo=pytz.UTC)
+                # Adicionar dados à lista all_data
+                for item in data:
+                    timestamp_ms = item[0]
+                    open_price = item[1]
+                    high_price = item[2]
+                    low_price = item[3]
+                    close_price = item[4]
 
-                # Adiciona os dados à lista
-                all_data.append(
-                    {
-                        "collected_at": collected_at,
-                        "name": COIN,
-                        "open": open_price,
-                        "high": high_price,
-                        "low": low_price,
-                        "close": close_price,
-                    },
-                )
+                    collected_at = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                    collected_at = collected_at.replace(tzinfo=pytz.UTC)
 
-            time.sleep(5)
+                    # Adiciona os dados à lista
+                    all_data.append(
+                        {
+                            "collected_at": collected_at,
+                            "name": COIN,
+                            "open": open_price,
+                            "high": high_price,
+                            "low": low_price,
+                            "close": close_price,
+                        },
+                    )
+                print(f"✅ [{i}/{total_coins}] {COIN}: {len(data)} registros")
 
-        else:
-            print(f"❌ Erro na requisição para {COIN}: {response.status_code}")
+            elif response.status_code == 429:
+                # Se receber 429, aguarda e tenta novamente
+                print(f"⚠️  {COIN}: Limite de requisições atingido. Aguardando...")
+                time.sleep(60)  # Aguarda 1 minuto antes de tentar novamente
+                continue
 
-    print(f"✅ Total de registros obtidos: {len(all_data)}")
+            elif response.status_code == 404:
+                print(f"⚠️  {COIN} não encontrado (404)")
+                continue
+
+            else:
+                print(f"❌ Erro {response.status_code} para {COIN}")
+
+        except requests.exceptions.Timeout:
+            print(f"⏱️  Timeout para {COIN}. Continuando...")
+            continue
+
+        except Exception as e:
+            print(f"⚠️  Erro inesperado em {COIN}: {str(e)}")
+            continue
+
+        if i < total_coins:
+            time.sleep(delay_between_calls)
+
+    print(f"✅ Total: {len(all_data)} registros de {len(all_data)} moedas")
     return all_data
 
 
