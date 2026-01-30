@@ -13,9 +13,10 @@
   - [🗂️ Estrutura do Projeto](#-estrutura-do-projeto)
   - [🚀 Deploy no Render](#-deploy-na-render)
   - [☁️ Orquestração com Prefect Cloud](#️-orquestração-com-prefect-cloud)
-
-
   - [🛠️ Configuração do Ambiente Local](#️-configuração-do-ambiente-local)
+  - [🔐 Variáveis de Ambiente](#-variáveis-de-ambiente)
+  - [🧪 Qualidade de Código](#-qualidade-de-código)
+  - [📄 Licença](#-licença)
 
 ## 📋 Sobre o Projeto
 
@@ -138,13 +139,17 @@ O prefect é responsavel por:
 > [!IMPORTANT]
 > Primeiro, crie/certifique-se de que seu arquivo `prefect.yaml' esta configurado corretamente.
 
+Você pode gerar um modelo base:
+
+```bash
+prefect init
+```
+
 Deploy do fluxo:
 
 ```bash
 prefect deploy
 ```
-
-
 
 ## 🛠️ Configuração do Ambiente Local
 
@@ -161,26 +166,54 @@ prefect deploy
 
 ```bash
 git clone https://github.com/Prog-LucasAlves/ENG_FinOpsETL
-
 cd ENG_FINOPSETL
 ```
 
 2. Configure o ambiente virtual:
 
-Informações de como instalar o **[UV](https://docs.astral.sh/uv/getting-started/installation/)**
+Instalar o **[UV](https://docs.astral.sh/uv/getting-started/installation/)**
 
 ```bash
 uv init
 
 uv venv
-
 source .venv/bin/activate # Linux/MacOs
-
 source .venv\Scripts\activate # Windows
 ```
 
-3. Instale as dependências::
+3. Instale as dependências:
 
 ```bash
 uv sync
 ```
+
+## 🔐 Variáveis de Ambiente
+
+Exemplo `.env`:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=finance
+DB_USER=postgres
+DB_PASSWORD=senha
+PREFECT_API_URL=https://api.prefect.cloud/api/accounts/...
+```
+
+## 🧪 Qualidade de Código
+
+O projeto utiliza:
+
+- **Ruff** -> Linter
+- **Pre-commit hooks** -> Padronização automática
+- **Secrets baseline** -> Segurança
+
+Executar manualmente:
+
+```bash
+pre-commit run --all-files
+```
+
+## 📄 Licença
+
+Este projeto está sob a licença [MIT]().
