@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import List
+import time
 import pytz
 
 load_dotenv()
@@ -37,7 +38,7 @@ class CryptoData(BaseModel):
     name="ETL-OHLC",
     retries=3,
     retry_delay_seconds=1,
-    timeout_seconds=60,
+    timeout_seconds=500,
     tags=["extract", "crypto"],
 )
 @task
@@ -129,6 +130,8 @@ def extract():
                         "close": close_price,
                     },
                 )
+
+            time.sleep(5)
 
         else:
             print(f"❌ Erro na requisição para {COIN}: {response.status_code}")
