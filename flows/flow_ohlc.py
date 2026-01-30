@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import List
+import time
 import pytz
 
 load_dotenv()
@@ -129,6 +130,8 @@ def extract():
                         "close": close_price,
                     },
                 )
+
+                time.sleep(10)
 
         else:
             print(f"❌ Erro na requisição para {COIN}: {response.status_code}")
