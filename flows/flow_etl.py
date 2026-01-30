@@ -60,13 +60,15 @@ class CryptoData(BaseModel):
     timeout_seconds=60,
     tags=["extract", "crypto"],
 )
-# Criar a tabela se não existir
 @task
 def create_table_if_not_exists():
     """Cria a tabela no banco de dados se ela não existir"""
     try:
         engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
         with engine.connect() as conn:
+            # Criar tabela se não existir
             conn.execute(
                 text("""
                 CREATE TABLE IF NOT EXISTS crypto (
@@ -181,7 +183,7 @@ def delete_duplicated_data():
 
         # Verifica conexão com o banco de dados
         with engine.connect() as conn:
-            # Eliminar dados duplicados
+            # Elimina os dados duplicados
             query = text("""
                 DELETE FROM crypto a
                 WHERE a.ctid <> (
@@ -204,6 +206,7 @@ def crypto_etl():
     """Orquestrador principal do ETL"""
     print("🚀 Iniciando pipeline ETL(Summary) de criptomoedas...")
 
+    # Cria a tabela se ela não existir
     create_table_if_not_exists()
 
     # Extrair

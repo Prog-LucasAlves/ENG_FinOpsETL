@@ -80,6 +80,10 @@ def get_id_coins() -> List[str]:
             query = text("SELECT DISTINCT id FROM crypto")
             result = conn.execute(query)
             coins_ids = [row[0] for row in result]
+
+            # Tocar '-' por '_'
+            coins_ids = [coin.replace("-", "_") for coin in coins_ids]
+
             print(f"🔍 IDs das criptomoedas: {coins_ids}")
             return coins_ids
     except Exception as e:
@@ -103,6 +107,7 @@ def extract():
             data = response.json()
             print(f"✅ {COIN}: {len(data)} registros obtidos")
 
+            # Adicionar dados à lista all_data
             for item in data:
                 timestamp_ms = item[0]
                 open_price = item[1]
@@ -113,6 +118,7 @@ def extract():
                 collected_at = datetime.fromtimestamp(timestamp_ms / 1000.0)
                 collected_at = collected_at.replace(tzinfo=pytz.UTC)
 
+                # Adiciona os dados à lista
                 all_data.append(
                     {
                         "collected_at": collected_at,
@@ -233,9 +239,10 @@ def create_view_per_coin():
 
         # Verifica conexão com o banco de dados
         with engine.connect() as conn:
-            # Criar uma view para cada moeda
             for coin in COINS:
                 view_name = f"crypto_ohlc_{coin}"
+
+                # Criar uma view para cada moeda
                 query = text(f"""
                     CREATE OR REPLACE VIEW {view_name} AS
                     SELECT * FROM crypto_ohlc WHERE name = '{coin}'
@@ -254,6 +261,7 @@ def crypto_etl():
     print("🚀 Iniciando pipeline ETL(OHLC) de criptomoedas...")
     print("💰 Moeda: BRL (Real Brasileiro)")
 
+    # Cria a tabela se ela não existir
     create_table_if_not_exists()
 
     # Extrai dos dados da API
