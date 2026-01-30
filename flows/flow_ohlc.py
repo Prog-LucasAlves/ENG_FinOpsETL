@@ -6,6 +6,7 @@ from sqlalchemy import text
 from datetime import datetime
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import pytz
 
 load_dotenv()
 
@@ -72,21 +73,42 @@ def create_table_if_not_exists():
 
 def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
+    all_data = []
+
     for COIN in COINS:
         COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
         PARAMS = {"vs_currency": "brl", "days": 7}
         response = requests.get(COINGECKO_URL, params=PARAMS)
         if response.status_code == 200:
             data = response.json()
-            df = pd.DataFrame(
-                data,
-                columns=["collected_at", "name", "open", "high", "low", "close"],
-            )
-            df["collected_at"] = pd.to_datetime(df["timestamp"], unit="ms")
-            df["name"] = COIN
-            yield df
+            print(f"✅ {COIN}: {len(data)} registros obtidos")
+
+            for item in data:
+                timestamp_ms = item[0]
+                open_price = item[1]
+                high_price = item[2]
+                low_price = item[3]
+                close_price = item[4]
+
+                collected_at = datetime.fromtimestamp(timestamp_ms / 1000.0)
+                collected_at = collected_at.replace(tzinfo=pytz.UTC)
+
+                all_data.append(
+                    {
+                        "collected_at": collected_at,
+                        "name": COIN,
+                        "open": open_price,
+                        "high": high_price,
+                        "low": low_price,
+                        "close": close_price,
+                    },
+                )
+
         else:
-            print(f"Erro na requisição para {COIN}: {response.status_code}")
+            print(f"❌ Erro na requisição para {COIN}: {response.status_code}")
+
+    print(f"✅ Total de registros obtidos: {len(all_data)}")
+    return all_data
 
 
 def transform(raw_data):
