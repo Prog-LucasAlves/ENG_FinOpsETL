@@ -55,7 +55,7 @@ deployments:
     work_queue_name: null
     job_variables: {}
   schedules:
-  - cron: '*/40 * * * *'
+  - cron: '0 8 * * *'
     timezone: UTC
     day_or: true
     active: true
