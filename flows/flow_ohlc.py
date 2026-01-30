@@ -71,7 +71,7 @@ def create_table_if_not_exists():
 def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     for COIN in COINS:
-        COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COINS}/ohlc"
+        COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
         PARAMS = {"vs_currency": "brl", "days": 7}
         response = requests.get(COINGECKO_URL, params=PARAMS)
         if response.status_code == 200:
