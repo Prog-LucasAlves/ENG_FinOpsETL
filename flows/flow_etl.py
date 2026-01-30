@@ -6,12 +6,7 @@ from sqlalchemy import text
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
-import logfire
-from dotenv import load_dotenv
 
-load_dotenv()
-logfire.configure()
-logfire.instrument_pydantic()
 
 # https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&per_page=100
 # https://docs.coingecko.com/v3.0.1/reference/coins-markets#coins-list-with-market-data
@@ -38,8 +33,6 @@ PARAMS = {
     "sparkline": "false",
     "price_change_percentage": "24h,7d",
 }
-
-logfire.info("Pipeline ETL-Summary iniciado")
 
 
 # Modelo Pydantic

@@ -5,13 +5,10 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 from datetime import datetime
 from pydantic import BaseModel
-import logfire
 from dotenv import load_dotenv
 import pytz
 
 load_dotenv()
-logfire.configure()
-logfire.instrument_pydantic()
 
 # https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=brl&days=7
 
@@ -38,9 +35,6 @@ class CryptoData(BaseModel):
     high: float
     low: float
     close: float
-
-
-logfire.info("Pipeline ETL-OHLC iniciado")
 
 
 @task(
