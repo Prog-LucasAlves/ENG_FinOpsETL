@@ -40,7 +40,7 @@ deployments:
     job_variables: {}
   schedules:
   - cron: '*/30 * * * *'
-    timezone: UTC
+    timezone: America/Sao_Paulo
     day_or: true
     active: true
 - name: Crypto-ETL-02
@@ -55,7 +55,7 @@ deployments:
     work_queue_name: null
     job_variables: {}
   schedules:
-  - cron: '*/40 * * * *'
-    timezone: UTC
+  - cron: '*/30 * * * *'
+    timezone: America/Sao_Paulo
     day_or: true
     active: true
