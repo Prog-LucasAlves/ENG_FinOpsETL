@@ -6,10 +6,12 @@ from sqlalchemy import text
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
+import logfire
 from dotenv import load_dotenv
 
 load_dotenv()
-
+logfire.configure()
+logfire.instrument_pydantic()
 
 # https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&per_page=100
 # https://docs.coingecko.com/v3.0.1/reference/coins-markets#coins-list-with-market-data
@@ -36,6 +38,8 @@ PARAMS = {
     "sparkline": "false",
     "price_change_percentage": "24h,7d",
 }
+
+logfire.info("Pipeline ETL-Summary iniciado")
 
 
 # Modelo Pydantic
@@ -173,6 +177,32 @@ def load(df):
 
     except Exception as e:
         print(f"❌ Erro ao carregar os dados: {e}")
+        raise
+
+
+@task
+def delete_duplicated_data():
+    """Cria uma view para cada moeda na tabela crypto"""
+    try:
+        engine = create_engine(DB_URL)
+
+        # Verifica conexão com o banco de dados
+        with engine.connect() as conn:
+            # Eliminar dados duplicados
+            query = text("""
+                DELETE FROM crypto a
+                WHERE a.ctid <> (
+                    SELECT min(b.ctid)
+                    FROM crypto b
+                    WHERE a.id = b.id
+                    AND a.collected_at = b.collected_at
+                )
+            """)
+            conn.execute(query)
+            conn.commit()
+            print("✅ Dados duplicados eliminados com sucesso.")
+    except Exception as e:
+        print(f"❌ Erro ao eliminar dados duplicados: {e}")
         raise
 
 
