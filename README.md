@@ -1,6 +1,6 @@
 # 🚀 Sistema de ETL de CriptoMoedas  com Streamlit
 
-![Python](https://img.shields.io/badge/python-3.11+-blue.svg) ![Prefect](https://img.shields.io/badge/prefect-ETL%20Orchestration-2E77BC) ![Render](https://img.shields.io/badge/Render-Deployed-2E77BC) ![MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg) ![Prefect](https://img.shields.io/badge/Prefect-ETL%20Orchestration-2E77BC) ![Render](https://img.shields.io/badge/Render-Deployed-2E77BC) ![MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 ---
 
@@ -8,50 +8,104 @@
   - [📋 Sobre o Projeto](#-sobre-o-projeto)
   - [✨ Funcionalidades Principais](#-funcionalidades-principais)
   - [🏗️ Arquitetura do Sistema](#️-arquitetura-do-sistema)
-  - [🔧 Estrutura do Projeto](#-estrutura-do-projeto)
-  - [🚀 Deploy na Render](#-deploy-na-render)
+  - [🔄 Pipeline ETL](#-pipeline-etl)
+  - [📊 Aplicação Streamlit](#-aplicação-streamlit)
+  - [🗂️ Estrutura do Projeto](#-estrutura-do-projeto)
+  - [🚀 Deploy no Render](#-deploy-na-render)
+  - [☁️ Orquestração com Prefect Cloud](#️-orquestração-com-prefect-cloud)
+
+
   - [🛠️ Configuração do Ambiente Local](#️-configuração-do-ambiente-local)
 
 ## 📋 Sobre o Projeto
 
-FINOPSETL é uma plataforma completa de engenharia de dados financeira que combina pipeline ETL orquestrado com Prefect Cloud e uma aplicação web interativa construída com Streamlit. O sistema é projetado para coletar, processar, visualizar e analisar dados financeiros de forma automatizada e escalável.
+O FINOPSETL é uma plataforma de engenahria de dados de **Criptomoedas** que integra:
+
+- Pipeline ETL automatizado
+- Orquestração com Prefect Cloud
+- Dashboard interativo em Streamlit
+- Deploy em nuvem via Render
+
+O sistema coleta os dados da api **coingecko**, processa e armazena em banco de dados, permitindo visualização e análise por meio de uma aplicação web.
+
+É um projeto focado em **Data Engineering** e boas práticas de produção.
 
 ## ✨ Funcionalidades Principais
 
-- Pipeline ETL Automatizado: Orquestração robusta com Prefect Cloud
-- Dashboard Interativo: Visualizações em tempo real com Streamlit
-- Deploy na Nuvem: Hospedagem full-stack no Render
-- Banco de Dados: Armazenamento seguro e escalável
-- Qualidade de Código: Padrões profissionais com pre-commit hooks
-- Ambiente Virtual: Gerenciamento de dependências com **`uv`**
+- Pipeline ETL automatizado
+- Orquestração de fluxos com Prefect Cloud
+- Dashboard interativo em tempo real com Streamlit
+- Armazenamento em banco de dados PostgreSQL
+- Deploy full-stack no Render
+- Gerenciamento moderno de dependências com **`uv`**
+- Padrões profissionais com pre-commit hooks
 
 ## 🏗️ Arquitetura do Sistema
 
 ```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Fontes de     │    │  Prefect Cloud  │    │   Banco de      │
-│   Dados         │────▶ (Orquestração)  │────▶   Dados        │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌──────────────────────┐
+│   Fontes de     │    │  Prefect Cloud  │    │   Banco de           │
+│   Dados (API)   │────▶ (Orquestração)  │────▶   Dados (Postgres)  │
+└─────────────────┘    └─────────────────┘    └──────────────────────┘
                                                         │
-┌─────────────────┐                                     │
-│   Render        │                                     │
-│   (Deploy)      │◀───────────────────────────────────┘
-│                 │
-│  ┌─────────────┐│
-│  │  Streamlit  ││
-│  │    App      ││
-│  └─────────────┘│
-└─────────────────┘
+                                                        ▼
+                                              ┌─────────────────┐
+                                              │    Streamlit    │
+                                              │   Dashboard     │
+                                              └─────────────────┘
+                                                        │
+                                                        ▼
+                                                 Usuário Final
 ```
 
-## 🔧 Estrutura do Projeto
+## 🔄 Pipeline ETL
 
-...
+Os fluxos ETL são responsávesi por:
 
-## 🚀 Deploy na Render
+1. **Extração:** Coleta de dados das criptomoedas via API
+2. **Trandformação:** Limpeza, padronização e estruturação
+3. **Carga:** Inserção no banco de dados
 
-**Configuração do Deploy**
+Fluxos disponíveis:
+
+- `flow.etl.py` -> Pipeline principal de ingestão
+- `flow_ohlc.py` -> Processamento de dados OHLC (Open, High, Low, Close)
+
+## 📊 Aplicação Streamlit
+
+A aplicação web permitr:
+
+- Visualizar dados das criptomoedas processados
+- Acompanhar métricas e séries temporais
+- Interagie com os dados de forma dinâmica
+
+Executada via (Localmente):
+
+```bash
+streamlit run app.py
+```
+
+## 🗂️ Estrutura do Projeto
+
+```text
+ENG_FINOPSETL
+│
+├── flows/                    # Fluxos Prefect (ETL)
+│   ├── flow_etl.py
+│   └── flow_ohlc.py
+│
+├── image/                    # Imagens usadas na documentação
+├── app.py                    # Aplicação Streamlit
+├── prefect.yaml              # Configuração do deploy no Prefect Clould
+├── pyproject.toml            # Configuração de dependências do projeto (UV)
+├── requirements.txt          # Dependências usadas para o deploy no Prefect Cloud
+├── .pre-commit-config.yaml   # Hooks de qualidade de código
+└── README.md                 # Documentação
+```
+
+## 🚀 Deploy no Render
+
+**Configuração do serviço Web:**
 
 1. Build Command: **`uv sync`**
 2. Start Command: **`streamlit run app`**
@@ -59,12 +113,38 @@ FINOPSETL é uma plataforma completa de engenharia de dados financeira que combi
 ![ ](https://github.com/Prog-LucasAlves/ENG_FinOpsETL/blob/main/image/render.png?raw=true)
 
 3. Python Version(Environment Variables): **`3.13.5`**
-4. PostgreSQL na plafaorma do Render(Environment Variables)
-    - **External Database URL** do banco de dados criado na plataforma do Rende
+4. PostgreSQL na plataforma do Render(Environment Variables)
+    - **External Database URL** do banco de dados criado na plataforma do Render
 
 ![ ](https://github.com/Prog-LucasAlves/ENG_FinOpsETL/blob/main/image/render_environment.png?raw=true)
 
+Banco de dados:
+
+- Criar PostrgreSQL no Render
+- Usar a variável **Extrenal Database URL**
+
+![ ](https://github.com/Prog-LucasAlves/ENG_FinOpsETL/blob/main/image/Render_postgresql.png?raw=true)
+
 🔗 **Link do Deploy:** [https://eng-finopsetl.onrender.com/](https://eng-finopsetl.onrender.com/)
+
+## ☁️ Orquestração com Prefect Cloud
+
+O prefect é responsavel por:
+
+- Agendamento dos fluxos
+- Monitoramento de execuções
+- Logs e retries automáticos
+
+> [!IMPORTANT]
+> Primeiro, crie/certifique-se de que seu arquivo `prefect.yaml' esta configurado corretamente.
+
+Deploy do fluxo:
+
+```bash
+prefect deploy
+```
+
+
 
 ## 🛠️ Configuração do Ambiente Local
 
