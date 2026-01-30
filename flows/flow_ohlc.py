@@ -27,8 +27,8 @@ COINS = ["bitcoin", "xrp"]
 
 # Modelo Pydantic
 class CryptoData(BaseModel):
-    name: str
     collected_at: datetime
+    name: str
     open: float
     high: float
     low: float
@@ -52,8 +52,8 @@ def create_table_if_not_exists():
             conn.execute(
                 text("""
                 CREATE TABLE IF NOT EXISTS crypto_ohlc (
-                    name VARCHAR(255),
                     collected_at TIMESTAMP WITH TIME ZONE,
+                    name VARCHAR(255),
                     open NUMERIC,
                     high NUMERIC,
                     low NUMERIC,
@@ -62,7 +62,7 @@ def create_table_if_not_exists():
                 """),
             )
             conn.commit()
-        print("✅ Tabela 'ohlc' verificada/criada com sucesso.")
+        print("✅ Tabela 'crypto_ohlc' verificada/criada com sucesso.")
     except Exception as e:
         print(f"❌ Erro ao criar tabela: {e}")
         raise
@@ -80,7 +80,7 @@ def extract():
                 data,
                 columns=["collected_at", "name", "open", "high", "low", "close"],
             )
-            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+            df["collected_at"] = pd.to_datetime(df["timestamp"], unit="ms")
             df["name"] = COIN
             yield df
         else:
@@ -94,8 +94,8 @@ def transform(raw_data):
 
     # Lista de colunas
     selected_columns = [
+        "collected_at",
         "name",
-        "time",
         "open",
         "high",
         "low",
