@@ -39,7 +39,7 @@ class CryptoData(BaseModel):
     name="ETL-OHLC",
     retries=3,
     retry_delay_seconds=30,
-    timeout_seconds=60,
+    timeout_seconds=500,
     tags=["extract", "crypto"],
 )
 @task
@@ -94,9 +94,9 @@ def get_id_coins() -> List[str]:
 
 
 @task(
-    timeout_seconds=60,
+    timeout_seconds=600,
     cache_key_fn=task_input_hash,
-    cache_expiration=timedelta(minutes=1),
+    cache_expiration=timedelta(minutes=10),
 )
 def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
