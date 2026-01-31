@@ -286,9 +286,13 @@ def create_view_per_coin():
                 view_name = f"crypto_ohlc_{coin}"
 
                 # Criar uma view para cada moeda
-                query = text(
-                    """SELECT DISTINCT id FROM crypto WHERE market_cap_rank < 50 AND TO_CHAR(collected_at, 'HH24:MI:SS.MS') = '01:00:00.000'""",
-                )
+                query = text(f"""
+                    CREATE OR REPLACE VIEW {view_name} AS
+                    SELECT *
+                    FROM crypto_ohlc
+                    WHERE name = '{coin}' AND TO_CHAR(collected_at, 'HH24:MI:SS.MS') = '01:00:00.000'
+                """)
+
                 conn.execute(query)
                 conn.commit()
                 print(f"✅ View '{view_name}' criada com sucesso.")
