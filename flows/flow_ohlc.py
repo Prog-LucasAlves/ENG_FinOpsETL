@@ -79,7 +79,7 @@ def get_id_coins() -> List[str]:
         # Verifica conexão com o banco de dados
         with engine.connect() as conn:
             # Query para pegar os IDs unicos das criptomoedas com market cap rank < 50
-            query = text("SELECT DISTINCT id FROM crypto WHERE market_cap_rank < 50")
+            query = text("SELECT DISTINCT id FROM crypto WHERE market_cap_rank < 50 ")
             result = conn.execute(query)
             coins_ids = [row[0] for row in result]
 
@@ -289,6 +289,7 @@ def create_view_per_coin():
                 query = text(f"""
                     CREATE OR REPLACE VIEW {view_name} AS
                     SELECT * FROM crypto_ohlc WHERE name = '{coin}'
+                    AND collected_at LIKE '%01:00:00.000%'
                 """)
                 conn.execute(query)
                 conn.commit()
