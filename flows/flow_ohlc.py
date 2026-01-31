@@ -106,7 +106,7 @@ def extract():
     total_coins = len(COINS)
     delay_between_calls = 6
 
-    KEY = variables.get("KEY")
+    KEY = variables.get("key")
 
     # Iterar sobre cada moeda e buscar os dados OHLC
     for i, COIN in enumerate(COINS, 1):
@@ -114,7 +114,7 @@ def extract():
             COINGECKO_URL = f"https://pro-api.coingecko.com/api/v3/coins/{COIN}/ohlc"
             PARAMS = {"vs_currency": "brl", "days": 7}
             HEADERS = {
-                "x-cg-pro-api-key": {KEY},
+                "x-cg-pro-api-key": KEY,
                 "User-Agent": "Mozilla/5.0 (compatible; YourApp/1.0)",
                 "Accept": "application/json",
             }
