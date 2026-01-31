@@ -112,9 +112,8 @@ def extract():
     for i, COIN in enumerate(COINS, 1):
         try:
             COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
-            PARAMS = {"vs_currency": "brl", "days": 7}
+            PARAMS = {"vs_currency": "brl", "days": 7, "x_cg_demo_api_key": KEY}
             HEADERS = {
-                "x_cg_demo_api_key": KEY,
                 "User-Agent": "Mozilla/5.0 (compatible; YourApp/1.0)",
                 "Accept": "application/json",
             }
