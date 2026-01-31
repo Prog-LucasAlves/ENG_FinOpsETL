@@ -39,7 +39,7 @@ class CryptoData(BaseModel):
     name="ETL-OHLC",
     retries=3,
     retry_delay_seconds=30,
-    timeout_seconds=500,
+    timeout_seconds=1800,
     tags=["extract", "crypto"],
 )
 @task
@@ -78,8 +78,8 @@ def get_id_coins() -> List[str]:
 
         # Verifica conexão com o banco de dados
         with engine.connect() as conn:
-            # Query para pegar os IDs unicos das criptomoedas
-            query = text("SELECT DISTINCT id FROM crypto")
+            # Query para pegar os IDs unicos das criptomoedas com market cap rank < 50
+            query = text("SELECT DISTINCT id FROM crypto WHERE market_cap_rank < 50")
             result = conn.execute(query)
             coins_ids = [row[0] for row in result]
 
@@ -94,16 +94,19 @@ def get_id_coins() -> List[str]:
 
 
 @task(
-    timeout_seconds=600,
+    timeout_seconds=1800,
     cache_key_fn=task_input_hash,
     cache_expiration=timedelta(minutes=10),
 )
 def extract():
     """Extrai dados da API do CoinGecko com os ids constante COIN"""
     all_data = []
+
     COINS = get_id_coins()
     total_coins = len(COINS)
     delay_between_calls = 6
+
+    KEY = variables.get("KEY")
 
     # Iterar sobre cada moeda e buscar os dados OHLC
     for i, COIN in enumerate(COINS, 1):
@@ -111,6 +114,7 @@ def extract():
             COINGECKO_URL = f"https://api.coingecko.com/api/v3/coins/{COIN}/ohlc"
             PARAMS = {"vs_currency": "brl", "days": 7}
             HEADERS = {
+                "x-cg-pro-api-key": {KEY},
                 "User-Agent": "Mozilla/5.0 (compatible; YourApp/1.0)",
                 "Accept": "application/json",
             }
