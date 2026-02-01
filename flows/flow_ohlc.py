@@ -273,8 +273,8 @@ def delete_duplicated_data():
 
 
 @task
-def create_view_per_coin():
-    """Cria uma view para cada moeda na tabela crypto_ohlc"""
+def create_table_per_coin():
+    """Cria uma table para cada moeda na tabela crypto_ohlc"""
     COINS = get_id_coins()
 
     try:
@@ -283,11 +283,11 @@ def create_view_per_coin():
         # Verifica conexão com o banco de dados
         with engine.connect() as conn:
             for coin in COINS:
-                view_name = f"crypto_ohlc_{coin}"
+                table_name = f"crypto_ohlc_{coin}"
 
                 # Criar uma view para cada moeda
                 query = text(f"""
-                    CREATE OR REPLACE VIEW {view_name} AS
+                    CREATE OR REPLACE TABLE {table_name} AS
                     SELECT *
                     FROM crypto_ohlc
                     WHERE name = '{coin}' AND TO_CHAR(collected_at, 'HH24:MI:SS.MS') = '01:00:00.000'
@@ -295,7 +295,7 @@ def create_view_per_coin():
 
                 conn.execute(query)
                 conn.commit()
-                print(f"✅ View '{view_name}' criada com sucesso.")
+                print(f"✅ View '{table_name}' criada com sucesso.")
     except Exception as e:
         print(f"❌ Erro ao criar views: {e}")
         raise
@@ -323,7 +323,7 @@ def crypto_etl():
     delete_duplicated_data()
 
     # Criar views por coin
-    create_view_per_coin()
+    create_table_per_coin()
 
     print("✅ Pipeline executado com sucesso!")
     return df
