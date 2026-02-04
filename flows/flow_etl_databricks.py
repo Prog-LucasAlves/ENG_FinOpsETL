@@ -5,21 +5,22 @@ from sqlalchemy import text
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
-import dotenv
-import os
-
-dotenv.load_dotenv()
+from pyspark.sql import SparkSession
+from pyspark.dbutils import DBUtils
 
 # https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&per_page=100
 # https://docs.coingecko.com/v3.0.1/reference/coins-markets#coins-list-with-market-data
 
 
 # Configurações Banco de Dados
-DB_HOST = os.getenv("dbhost")
-DB_PORT = os.getenv("dbport")
-DB_NAME = os.getenv("dbname")
-DB_USER = os.getenv("dbuser")
-DB_PASSWORD = os.getenv("dbpassword")
+spark = SparkSession.builder.getOrCreate()
+dbutils = DBUtils(spark)
+
+DB_HOST = dbutils.secrets.get("db-secrets", "DB_HOST")
+DB_PORT = dbutils.secrets.get("db-secrets", "DB_PORT")
+DB_NAME = dbutils.secrets.get("db-secrets", "DB_NAME")
+DB_USER = dbutils.secrets.get("db-secrets", "DB_USER")
+DB_PASSWORD = dbutils.secrets.get("db-secrets", "DB_PASS")
 
 DB_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
