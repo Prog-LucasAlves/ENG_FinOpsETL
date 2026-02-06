@@ -16,13 +16,8 @@ from pyspark.dbutils import DBUtils
 spark = SparkSession.builder.getOrCreate()
 dbutils = DBUtils(spark)
 
-DB_HOST = dbutils.secrets.get("db-secrets", "DB_HOST")
-DB_PORT = dbutils.secrets.get("db-secrets", "DB_PORT")
-DB_NAME = dbutils.secrets.get("db-secrets", "DB_NAME")
-DB_USER = dbutils.secrets.get("db-secrets", "DB_USER")
-DB_PASSWORD = dbutils.secrets.get("db-secrets", "DB_PASS")
 
-DB_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DB_URL = dbutils.secrets.get("db-secrets", "DB_URL")
 
 # Configurações da API
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
